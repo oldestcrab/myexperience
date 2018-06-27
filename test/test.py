@@ -1,6 +1,7 @@
 import re
 # /htmlpaper/201861510484322846535.shtm
-pattern = re.compile('[a-zA-Z./]')
-a = '/htmlpaper/201861510484322846535.shtmhtmlnews/2018/6/414034.shtm'
-b = pattern.sub('',a)
-print(b.group(1))
+pattern = re.compile('不(.*?)吧')
+a = '/ht不124356吧mlpaper/201861510484322846535.shtmhtmlnews/2018/6/4140不dsgds好吧34.shtm'
+b = pattern.sub('好吧',a)
+#print(b.group(1))
+print(b)

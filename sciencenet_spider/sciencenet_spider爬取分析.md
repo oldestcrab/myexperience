@@ -17,7 +17,7 @@ url = 'http://news.sciencenet.cn/fieldlist.aspx?id=3'
 可以看到，一共有612页，我们要获取每一页的内容，只需要将页码从 1 到612页顺次遍历即可，页码数是确定的。所以在这里我们可以直接在页面跳转文本框中输入要跳转的页码，然后点击确定按钮跳转即可到达页码对应的页面。
 当我们成功加载出某一页时，利用 Selenium 即可获取页面源代码，然后我们再用lxml解析库解析,获取文章的详细链接。
 
-### 索引页获取
+#### 索引页获取
 ```
 http://news.sciencenet.cn/fieldlist.aspx?id=3
 ```
@@ -59,14 +59,14 @@ def index_page(page, judge):
 等待加载指定为最长 10 秒。如果在这个时间内成功匹配了等待条件，那就立即返回相应结果并继续向下执行，否则到了最大等待时间还没有加载出来就直接抛出超时异常。
 判断是否加载以及跳页完成，可以通过判断当前高亮的页码数是当前的页码数即可，如下：
 ![](http://ww1.sinaimg.cn/large/e2528559gy1fspoimilegj20um02baac.jpg)
-所以在这里使用等待条件 
+所以在这里使用等待条件:
 ```
 text_to_be_present_in_element_value((By.NAME, 'AspNetPager1_input'), str(page))
 ```
 通过判断高亮页码节点对应的页码数是否与我们传递过去的参数相等，如果是，那就证明页面成功跳转到了这一页，页面跳转成功。
 然后通过 get_pages() 方法进行页面解析。
 
-#### 解析索引页文章url
+#### 解析索引页文章url以及保存文章
 获取页面源代码，然后用 lxml 进行解析，实现如下：
 ```python
 def get_pages(page, judge):
@@ -79,7 +79,7 @@ def get_pages(page, judge):
     result = etree.HTML(html)
     items = result.xpath('//*[@id="DataGrid1"]/tbody//tbody')
     if page == 1:
-        #领域新闻为 @width = "60%" ， 论文为 @width = "60%"
+        #领域新闻为 @width = "60%" ， 论文为 @width = "70%"
         next_judge = items[0].xpath('.//td[@width = "60%"]/a/@href')[0]
         with open('sciencenet_spider/judge.text', 'w', encoding = 'utf-8') as f:
             print(next_judge)
@@ -99,9 +99,53 @@ def get_pages(page, judge):
         response = requests.get(url, headers = headers)
         response.encoding = 'utf-8'
         time.sleep(2)
-        save_page(response.text, filename)
+        detail_pattern = re.compile(r'<table id="content".*<!-- JiaThis Button END -->.*?</table>',re.S)
+        detail_result = detail_pattern.search(response.text)        
+        save_page(detail_result, filename)
         print('保存第', page, '页索引页所有文章成功') 
 
 ```
-调用 page_source 属性获取了页码的源代码，然后构造 lxml 解析对象，用 for 循环提取每个文章列表节点内部的url，通过组合得到每个文章的真正url。然后调用
-通过正则表达式匹配文章中需要的内容，并提取url中的数字，作为文件名，然后通过方法保存内容。判断爬取的文章是否已进行过爬取，通过引入一个值进行对比，每次爬取时，在索引页爬取文章url时，把第一个爬取的url写入文件，然后在下一次爬取时，先读取这个文件，获得一个字符串，把这个字符串与每次获取的文章url进行对比，如果相等，就break，退出循环，结束爬取。
+调用 page_source 属性获取了页码的源代码，然后构造 lxml 解析对象，通过
+```
+items = result.xpath('//*[@id="DataGrid1"]/tbody//tbody')
+```
+获取具体文章的url所在的list,用 for 循环提取每个文章列表节点内部的url，通过组合得到每个文章的真正url。并提取url中的数字，作为保存的数据文件名，然后通过save_page方法保存内容。
+```python
+def save_page(result, filename):
+    """
+    保存到文件
+    :param result: 结果
+    :param filename: 保存的文件名
+    """
+    full_filename = './sciencenet_spider/sciencenet_spider_result/' + filename + '.html'
+    with open(full_filename, 'w', encoding = 'utf-8') as f:
+        f.write(result.group())
+    #print('文件' + full_filename + '保存成功')    
+```
+#### 判断上次爬取位置
+判断爬取的文章是否已进行过爬取，通过引入一个值进行对比，每次脚本进行爬取时，都会把当前爬取的第一个文章的url写入文件next_judge。
+```python
+if page == 1:
+    #领域新闻为 @width = "60%" ， 论文为 @width = "60%"
+    next_judge = items[0].xpath('.//td[@width = "60%"]/a/@href')[0]
+    with open('sciencenet_spider/judge.text', 'w', encoding = 'utf-8') as f:
+        print(next_judge)
+        f.write(next_judge)
+```
+然后在下一次脚本爬取时，先读取这个文件，获得一个字符串，把这个字符串与每次获取的文章url进行对比，如果相等，就break，退出循环，结束爬取。
+首先在爬取开始时读取上次爬取保存的字符串：
+```python
+with open('sciencenet_spider/judge.text', 'r', encoding = 'utf-8') as f:
+    judge = f.read()
+for i in range(1, 4):
+    params = index_page(i, judge)
+    if params == 1:
+        break
+```
+通过传递参数judge,在get_pages方法中进行判断，如果相等，就退出循环，返回1,爬取脚本判断`params == 1`,脚本退出。
+```python
+if kw == judge:
+    print("爬取到上次爬取位置，结束爬取！")
+    return 1
+    break
+```
