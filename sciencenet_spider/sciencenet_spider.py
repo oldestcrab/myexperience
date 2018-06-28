@@ -30,9 +30,9 @@ def index_page(page, judge):
         #url_list = ['http://paper.sciencenet.cn/paper/fieldlist.aspx?id=2','http://news.sciencenet.cn/fieldlist.aspx?id=3']
         #for url in url_list:
         # 论文链接
-        url = 'http://paper.sciencenet.cn/paper/fieldlist.aspx?id=2'
+        # url = 'http://paper.sciencenet.cn/paper/fieldlist.aspx?id=2'
         # 领域新闻链接
-        #url = 'http://news.sciencenet.cn/fieldlist.aspx?id=3'
+        url = 'http://news.sciencenet.cn/fieldlist.aspx?id=3'
         browser.get(url)
         if page > 1:
             input = wait.until(
@@ -61,7 +61,7 @@ def get_pages(page, judge):
     items = result.xpath('//*[@id="DataGrid1"]/tbody//tbody')
     if page == 1:
         #领域新闻为 @width = "60%" ， 论文为 @width = "70%"
-        next_judge = items[0].xpath('.//td[@width = "70%"]/a/@href')[0]
+        next_judge = items[0].xpath('.//td[@width = "60%"]/a/@href')[0]
         with open('sciencenet_spider/judge.txt', 'w', encoding = 'utf-8') as f:
             print("next_judge:\t" + next_judge)
             f.write(next_judge)
@@ -72,7 +72,7 @@ def get_pages(page, judge):
         #    'from': item.xpath('.//td[@width = "20%"]')[0].text.replace('\n','').replace(' ',''),
         #    'date': item.xpath('.//td[@width = "10%"]')[0].text.replace('\n','').replace(' ','')
         #}
-        kw = item.xpath('.//td[@width = "70%"]/a/@href')[0]
+        kw = item.xpath('.//td[@width = "60%"]/a/@href')[0]
         #title = item.xpath('.//td[@width = "60%"]/a')[0].text.replace('\n','').replace(' ','')
         if kw == judge:
             print("爬取到上次爬取位置，结束爬取！")
@@ -80,7 +80,7 @@ def get_pages(page, judge):
             break
         url = 'http://paper.sciencenet.cn' + kw
         #/htmlpaper/201861510484322846535.shtm
-        filename_pattern = re.compile(r'[a-zA-Z:./-_]')
+        filename_pattern = re.compile(r'[a-zA-Z:\.\/\-\_]')
         filename = filename_pattern.sub('', kw)
         headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.116 Safari/537.36'
         }
@@ -92,7 +92,7 @@ def get_pages(page, judge):
         detail_search = detail_pattern.search(response.text)   
         detail_result = detail_search.group()
         # 匹配url链接
-        img_pattern = re.compile(r'<img(.*?)src="(.*?)"', re.S)
+        img_pattern = re.compile(r'<img(.*?)\ssrc="(.*?)"', re.S)
         # 获取所有的url链接
         img_findall = img_pattern.findall(detail_result)
         for detail in img_findall:
@@ -112,13 +112,13 @@ def get_pages(page, judge):
                 print('图片网址有误:' + url)
         
         def img_url_name(match):
-            img_url_pattern = re.compile(r'[a-zA-Z:/.-_]')
+            img_url_pattern = re.compile(r'[a-zA-Z:/\.\-\_]')
             img_url_detail = img_url_pattern.sub('', match.group(2))
             img_url_detail_add = img_url_pattern.search(match.group(1))
             #print("img_url_detail:" + img_url_detail)
             #print('img_url_detail_add: ' + img_url_detail_add.group(), type(img_url_detail_add))
             #if img_url_detail_add is None: 
-            img_name = '<img src="./img/' + img_url_detail + '.jpg'
+            img_name = '<img src="./img/' + img_url_detail + '.jpg"'
             #else:
             #    img_name = '<img ' + img_url_detail_add.group() + 'src="./img/' + img_url_detail + '.jpg"'
             print("img_name:" + img_name)

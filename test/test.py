@@ -6,10 +6,7 @@ a = '''
 <img src="/upload/news/images/2018/6/2018s621135十大高手给是嘀咕嘀咕9331460.jpg">
 <img src="/upload/news/images/2018/6/20186211359331460.jpg">
 '''
-patternss = re.compile('s(r)c')
-j = patternss.search(a)
-print(j,type(j))
-print(j.group(1),type(j.group()))
+
 
 def test(match):
     #print(match.group(0))
@@ -23,5 +20,10 @@ b = patterns.sub(test, a)
 
 #print(b.group(1))
 #print(b)
-
-
+kw = '''
+<img alt="" oldsrc="W020180517381868922980.jpg" src="http://www.ivpp.ac.cn/xwdt/kydt/201805/W020180517381868922980.jpg" style="border-width: 0px;">
+'''
+img_pattern = re.compile(r'<img(.*?)\ssrc="(.*?)"', re.S)
+img_findall = img_pattern.findall(kw)
+for detail in img_findall:
+    print(type(detail), detail[1])
