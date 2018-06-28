@@ -95,10 +95,7 @@ def get_pages(page, judge):
         img_pattern = re.compile(r'<img(.*?)src="(.*?)"', re.S)
         # 获取所有的url链接
         img_findall = img_pattern.findall(detail_result)
-        #print("test1")
         for detail in img_findall:
-            #print("test2")
-            #print(detail[1], type(detail[1]))
             try:
                 img_sour_pattern = re.compile(r'http')
                 img_judge = img_sour_pattern.search(detail[1])
@@ -113,8 +110,6 @@ def get_pages(page, judge):
                 save_img(img_response, img_save_name)
             except ConnectionError:
                 print('图片网址有误:' + url)
-        # img_url_name = './img/' + img_save_name + '.jpg'
-        # img_url_name = img_pattern.sub('', detail_result)
         
         def img_url_name(match):
             img_url_pattern = re.compile(r'[a-zA-Z:/.-_]')
