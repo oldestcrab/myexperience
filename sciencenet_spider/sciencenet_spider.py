@@ -138,6 +138,7 @@ def get_pages(page, judge):
                 # 获取图片
                 img_response = requests.get(img_url, headers = headers).content
                 img_save_name = filename_pattern.sub('', detail[1])
+                # 保存图片
                 save_img(img_response, img_save_name)
             except ConnectionError:
                 print('图片网址有误:' + url)
@@ -159,7 +160,7 @@ def get_pages(page, judge):
             return img_name
         # 匹配文章内容中的图片url，替换为本地图片url
         real_result = img_pattern.sub(img_url_name, detail_result)
-            
+        # 保存文章内容              
         save_page(real_result, filename)
 
     print('保存第', page, '页索引页所有文章成功') 
