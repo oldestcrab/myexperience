@@ -1,6 +1,7 @@
 ### 科学网爬取脚本
-> 爬取科学网生命科学分类下的论文以及新闻部分
-
+- 爬取科学网生命科学分类下的论文以及新闻部分
+> [论文](http://paper.sciencenet.cn/paper/fieldlist.aspx?id=2)
+> [新闻](http://news.sciencenet.cn/fieldlist.aspx?id=3)
 ### 目录
 1. `phantomjs-2.1.1-windows`——无界浏览器，脚本中调用
 2. `sciencenet_spider.py`——爬取脚本
