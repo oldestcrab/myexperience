@@ -11,6 +11,7 @@ import time
 import requests
 from requests.exceptions import ConnectionError
 import re
+import config
 #import os
 
 # 构造一个 WebDriver 对象，调用phantomjs
@@ -31,10 +32,11 @@ def index_page(page, judge):
         #url_list = ['http://paper.sciencenet.cn/paper/fieldlist.aspx?id=2','http://news.sciencenet.cn/fieldlist.aspx?id=3']
         #for url in url_list:
         # 论文链接
-        url = 'http://paper.sciencenet.cn/paper/fieldlist.aspx?id=2'
+        #url = 'http://paper.sciencenet.cn/paper/fieldlist.aspx?id=2'
         # 领域新闻链接
         # url = 'http://news.sciencenet.cn/fieldlist.aspx?id=3'
-        browser.get(url)
+        # config.url为url链接
+        browser.get(config.url)
 
         # 判断页码
         if page > 1:
@@ -77,8 +79,9 @@ def get_pages(page, judge):
         # 领域新闻为 @width = "60%" ，
         # next_judge = items[0].xpath('.//td[@width = "60%"]/a/@href')[0]
         # 论文为 @width = "70%"
-        next_judge = items[0].xpath('.//td[@width = "70%"]/a/@href')[0]
-        with open('sciencenet_spider/judge.txt', 'w', encoding = 'utf-8') as f:
+        # config.judge_width为不同宽度，即： @width = "60%" | @width = "70%"
+        next_judge = items[0].xpath('.//td[' + config.judge_width + ']/a/@href')[0]
+        with open(config.judge_file_name, 'w', encoding = 'utf-8') as f:
             print("next_judge:\t" + next_judge)
             f.write(next_judge)
 
@@ -95,7 +98,7 @@ def get_pages(page, judge):
         # 领域新闻为 @width = "60%" ，
         # kw = item.xpath('.//td[@width = "60%"]/a/@href')[0]
         # 论文为 @width = "70%"
-        kw = item.xpath('.//td[@width = "70%"]/a/@href')[0]
+        kw = item.xpath('.//td[' + config.judge_width + ']/a/@href')[0]
         #title = item.xpath('.//td[@width = "60%"]/a')[0].text.replace('\n','').replace(' ','')
 
         # 判断是否爬取到上次爬取位置，是的话返回1
@@ -105,17 +108,26 @@ def get_pages(page, judge):
             break
 
         # 组合url
-        url = 'http://paper.sciencenet.cn' + kw
+        #url = 'http://paper.sciencenet.cn' + kw
+        #print(url)
         #/htmlpaper/201861510484322846535.shtm
         # 提取url中的数字作为文件名保存
         filename_pattern = re.compile(r'[a-zA-Z:\.\/\-\_]')
         filename = filename_pattern.sub('', kw)
         headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.116 Safari/537.36'
         }
-        response = requests.get(url, headers = headers)
-        response.encoding = 'utf-8'
-        time.sleep(2)
-
+        try:
+            url_pattern = re.compile(r'http')
+            url_judge = url_pattern.search(kw)
+            if url_judge is None:
+                url = 'http://news.sciencenet.cn' + kw 
+            else:
+                url = kw 
+            response = requests.get(url, headers = headers)
+            response.encoding = 'utf-8'
+            time.sleep(2)
+        except ConnectionError:
+            print('文章网址有误:' + url)
         # 提取文章中的内容
         detail_pattern = re.compile(r'<table id="content".*<!-- JiaThis Button END -->.*?</table>',re.S)
         detail_search = detail_pattern.search(response.text)   
@@ -193,9 +205,10 @@ def main():
     """
     遍历每一页索引页
     """
-    with open('sciencenet_spider/judge.txt', 'r', encoding = 'utf-8') as f:
-        judge = f.read()
-    for i in range(1, 3):
+    # 读取上次爬取时保存的用于判断爬取位置的字符串
+    with open(config.judge_file_name, 'r', encoding = 'utf-8') as f:
+            judge = f.read()
+    for i in range(1, config.num):
         params = index_page(i, judge)
         if params == 1:
             break

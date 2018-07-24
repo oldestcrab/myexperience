@@ -8,3 +8,4 @@
 4. `sciencenet_spider_result`——爬取到的文章保存位置
 5. `sciencenet_spider_result/img`——爬取的文章图片保存位置
 6. `judge.txt`——保存判断值，用于判断上次爬取位置
+7. `config.py`——一些脚本运行时需要修改的数据，避免去修改脚本
