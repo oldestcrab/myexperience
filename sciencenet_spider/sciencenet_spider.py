@@ -161,7 +161,7 @@ def get_pages(page, judge):
             """
             img_url_pattern = re.compile(r'[a-zA-Z:/\.\-\_]')
             img_url_detail = img_url_pattern.sub('', match.group(2))
-            img_url_detail_add = img_url_pattern.search(match.group(1))
+            # img_url_detail_add = img_url_pattern.search(match.group(1))
             #print("img_url_detail:" + img_url_detail)
             #print('img_url_detail_add: ' + img_url_detail_add.group(), type(img_url_detail_add))
             #if img_url_detail_add is None: 
