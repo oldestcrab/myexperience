@@ -61,13 +61,13 @@ def get_page(url):
     """
     # 组合url:'http://www.cwca.org.cn/news/tidings/ff80808161da671a0163d9a89daa03b7.html'
     full_url = 'http://www.cwca.org.cn' + url
+    # print(full_url)
     # 获取文章内容
     headers = {'user-agent':'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)'}
 
     article_response = requests.get(full_url, headers = headers)
-    print(article_response.encoding )
-    article_response.encoding = 'utf-8'
-    print(article_response.encoding )
+    # print( article_response.encoding, article_response.apparent_encoding)
+    article_response.encoding = 'GB2312'
     time.sleep(1)
 
     # 通过正则表达式获取文章中需要的内容
@@ -87,23 +87,26 @@ def get_page(url):
 
         # 获取文章中所有的图片url链接:'/ckeditor/userfiles/images/20180608-2.jpg'
         # img_pattern = re.compile(r'<img style(.*?)src="(.*?)"', re.S)
-        img_pattern = re.compile(r'<img alt="" src="(.*?)" style', re.S)
+        img_pattern = re.compile(r'<img(.*?)\ssrc="(.*?)"', re.S)
         img_findall = img_pattern.findall(article_source)
         for kw in img_findall:
             # 判断提取的url是否需要组合
             img_sour_pattern = re.compile(r'http')
-            img_judge = img_sour_pattern.search(kw)
+            img_judge = img_sour_pattern.search(kw[1])
             if img_judge is None:
-                img_full_url = 'http://www.cwca.org.cn'  + kw
+                img_full_url = 'http://www.cwca.org.cn'  + kw[1]
             else:
-                img_full_url = kw
-            print(type(kw),kw)
+                img_full_url = kw[1]
+            # print(kw[1])
+            # print('test')
             # img_full_url = 'http://www.cwca.org.cn'  + kw
-            img_name_pattern = re.compile('.*\/(\w+.*?\.jpg?)')
-            print(img_full_url)
-            img_save_name = img_name_pattern.search(kw).group(1)
+            # img_url_pattern = re.compile(r'[a-zA-Z:/\.\-\_]')
+            # img_url_detail = img_url_pattern.sub('', match.group(2))
+            img_name_pattern = re.compile('.*\/(\w+.*?\.\w+)', re.I)
+            # print('img_full_url:'+img_full_url)
+            img_save_name = img_name_pattern.search(kw[1]).group(1)
 
-            print( img_save_name)
+            # print('img_save_name:'+ img_save_name)
             try:
                 # 获取图片
                 img_response = requests.get(img_full_url, headers = headers).content
@@ -118,15 +121,22 @@ def get_page(url):
             匹配文章内容中的图片url，替换为本地url
             """
             # /ckeditor/userfiles/images/20180608-2.jpg
-            img_sub_pattern = re.compile('.*\/(\w+.*?\.jpg?)')
-            img_sub_name = img_sub_pattern.search(match.group(1))
-            img_name  = '<img alt="" src="./img/' + img_sub_name.group(1) + '" style'
-            # img_sub = img_pattern.sub(img_name, match)
-            print(img_name)
-            return img_name
+            img_real_pattern = re.compile(r'.[pj][pn]')
+            img_real_name = img_real_pattern.search(match.group())
+            # print('img_real:' + img_real)
+            if img_real_name is not None:
+                img_sub_pattern = re.compile('.*\/(\w+.*?\.\w+)')
+                img_sub_name = img_sub_pattern.search(match.group())
+                img_name  = ' src="./img/' + img_sub_name.group(1) + '"'
+                # img_sub = img_pattern.sub(img_name, match)
+                # print('img_name:'+img_name)
+                return img_name
 
         # 匹配文章内容中的图片url，替换为本地图片url
-        real_result = img_pattern.sub(img_url_name, article_source)
+        # img_pattern = re.compile(r'<img(.*?)\ssrc="(.*?)"', re.S)
+        img_real_pattern = re.compile('\ssrc="(.*?)"')
+      
+        real_result = img_real_pattern.sub(img_url_name, article_source)
 
         # 保存文章内容 
         save_page(real_result, filename.group(1))
@@ -140,9 +150,12 @@ def save_img(result, filename):
     :param filename: 保存的图片名
     """
     img_save_full_name = './cwca_org_spider/cwca_org_spider_result/img/' + filename 
-    with open(img_save_full_name, 'wb') as f:
-        f.write(result)  
-        
+    try:
+        with open(img_save_full_name, 'wb') as f:
+            f.write(result)  
+    except:
+        print('图片保存错误：' + filename)
+
 def save_page(html,filename):
     """
     保存到文件
@@ -159,7 +172,7 @@ def main():
     # with open('./cwca_org_spider/judge.txt', 'r', encoding = 'utf-8') as f:
             # judge = f.read()
     judge = 2
-    for i in range(1):
+    for i in range(7):
         params = index_page(i, judge)
         print('保存第', str(i+1), '页索引页所有文章成功')  
         if params == 1:
