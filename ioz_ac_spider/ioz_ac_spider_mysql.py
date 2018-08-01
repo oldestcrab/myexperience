@@ -37,7 +37,7 @@ def index_page(page, judge):
     # 写入当前爬取到的第一个文章url
     if page == 0:
         next_judge = index_source[0].xpath('@href')[0].replace('./','/',)
-        with open('./ioz_ac_spider/judge.txt', 'w', encoding = 'utf-8') as f:
+        with open('./judge.txt', 'w', encoding = 'utf-8') as f:
             print("next_judge:\t" + next_judge)
             f.write(next_judge)
 
@@ -108,7 +108,7 @@ def get_page(url):
             匹配文章内容中的图片url，替换为本地url
             """
             # ./img/W020180622376479527977.jpg
-            img_name  = 'src="./img/W' + match.group(1)
+            img_name  = 'src="/home/bmnars/data/ioz_ac_spider_result/img/W' + match.group(1)
             # img_sub = img_pattern.sub(img_name, match)
             return img_name
 
@@ -128,7 +128,7 @@ def save_img(result, filename):
     :param result: 图片文件
     :param filename: 保存的图片名
     """
-    img_save_full_name = './ioz_ac_spider/ioz_ac_spider_result/img/' + filename 
+    img_save_full_name = '/home/bmnars/data/ioz_ac_spider_result/img' + filename 
     with open(img_save_full_name, 'wb') as f:
         f.write(result)  
         
@@ -137,7 +137,7 @@ def save_page(html,filename):
     保存到文件
     :param html: 结果
     """
-    with open('./ioz_ac_spider/ioz_ac_spider_result/' + filename + '.html', 'w', encoding = 'utf-8') as f:
+    with open('/home/bmnars/data/ioz_ac_spider_result/' + filename + '.html', 'w', encoding = 'utf-8') as f:
         f.write(html)
 
 def save_mysql(source_url, lcal_url):
@@ -149,7 +149,7 @@ def save_mysql(source_url, lcal_url):
     """
     db = pymysql.connect(host='localhost', user='bmnars', password='vi93nwYV', port=3306)
     cursor = db.cursor()
-    full_local_url = './ioz_ac_spider/ioz_ac_spider_result/' + lcal_url + '.html'
+    full_local_url = '/home/bmnars/data/ioz_ac_spider_result/' + lcal_url + '.html'
 
     data = {
         'source_url':source_url,
@@ -175,7 +175,7 @@ def main():
     遍历每一页索引页
     """
     # 读取上次爬取时保存的用于判断爬取位置的字符串
-    with open('./ioz_ac_spider/judge.txt', 'r', encoding = 'utf-8') as f:
+    with open('./judge.txt', 'r', encoding = 'utf-8') as f:
             judge = f.read()
     
     for i in range(9):
