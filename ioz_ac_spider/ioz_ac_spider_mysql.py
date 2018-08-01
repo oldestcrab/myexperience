@@ -164,7 +164,7 @@ def save_mysql(source_url, lcal_url):
         if cursor.execute(sql, tuple((data.values()))):
             db.commit()
     except:
-        print("failed:" + tuple(data.values()))
+        print("failed:" + data['source_url'].values())
         db.rollback()
     
     cursor.close()      
