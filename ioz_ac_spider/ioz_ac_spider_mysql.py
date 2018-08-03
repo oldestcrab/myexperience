@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- encoding:utf-8 -*-
 
 import re
@@ -51,9 +51,8 @@ def index_page(page, judge):
             print("已爬取到上次爬取位置！")
             return 1
             break
-
-        else:
-            return index_url
+   
+        get_page(index_url)
 
 def get_page(url):
     """
@@ -128,7 +127,7 @@ def save_img(result, filename):
     :param result: 图片文件
     :param filename: 保存的图片名
     """
-    img_save_full_name = '/home/bmnars/data/ioz_ac_spider_result/img' + filename 
+    img_save_full_name = '/home/bmnars/data/ioz_ac_spider_result/img/' + filename 
     with open(img_save_full_name, 'wb') as f:
         f.write(result)  
         
@@ -140,35 +139,38 @@ def save_page(html,filename):
     with open('/home/bmnars/data/ioz_ac_spider_result/' + filename + '.html', 'w', encoding = 'utf-8') as f:
         f.write(html)
 
-def save_mysql(source_url, lcal_url):
+def save_mysql(source_url, local_url):
     """
     保存到文件
     :param source_url: 文章来源url
-    :param lcal_url: 文章来源url
+    :param local_url: 文章来源url
     :param cursor: mysql游标
     """
-    db = pymysql.connect(host='localhost', user='bmnars', password='vi93nwYV', port=3306)
+    db = pymysql.connect(host='localhost', user='bmnars', password='vi93nwYV', port=3306, db='bmnars')
     cursor = db.cursor()
-    full_local_url = '/home/bmnars/data/ioz_ac_spider_result/' + lcal_url + '.html'
-
+    full_local_url = '/home/bmnars/data/ioz_ac_spider_result/' + local_url + '.html'
+    update_time = time.strftime('%Y-%m-%d',time.localtime())
     data = {
         'source_url':source_url,
-        'lcal_url':full_local_url
+        'local_url':full_local_url,
+        'source':'http://www.ioz.ac.cn',
+	'update_time':update_time
     }
     table = '_cs_bmnars_link'
     keys = ','.join(data.keys())
     values = ','.join(['%s']*len(data))
-    sql = 'INSERT INTO {table}({keys}) VALUES ({values})'.format(table=table, keys=keys, values=values)
-
+    sql = 'INSERT INTO {table}({keys}) VALUES ({values});'.format(table=table, keys=keys, values=values)
+    #print(sql)
     try:
-        if cursor.execute(sql, tuple((data.values()))):
+        if cursor.execute(sql,tuple((data.values()))):
             db.commit()
     except:
-        print("failed:" + data['source_url'].values())
+        print("save_mysql_failed:" + source_url)
         db.rollback()
     
-    cursor.close()      
-    db.close()
+    finally:
+        cursor.close()      
+        db.close()
 
 def main():
     """
@@ -178,12 +180,11 @@ def main():
     with open('./judge.txt', 'r', encoding = 'utf-8') as f:
             judge = f.read()
     
-    for i in range(9):
+    for i in range(1):
         params = index_page(i, judge)
         if params == 1:
             break
-        else:
-            get_page(params)
+        
         print('保存第', str(i+1), '页索引页所有文章成功')  
 
 
