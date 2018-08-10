@@ -1,0 +1,8 @@
+'pagename':'ASP.brief_default_result_aspx',
+'dbPrefix':'SCDB',
+'dbCatalog':'中国学术文献网络出版总库',
+'ConfigFile':'SCDBINDEX.xml',
+'research':'off',
+'t':'1533709424302',
+'keyValue':'生物',
+'S':'1'

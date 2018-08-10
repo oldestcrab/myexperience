@@ -1,11 +1,10 @@
-import re
+import requests
 
-a = re.compile('\w')
+sb = requests.Session()
+a = sb.get('http://httpbin.org/cookies/set/number/123456789')
+print(a.cookies)
 
-b = '---'
+r = sb.get('http://httpbin.org/cookies')
+print(r.cookies)
 
-c = a.search(b)
-print(c,type(c))
-
-for c in c:
-    print('aaa')
+print(r.text)
