@@ -205,6 +205,8 @@ def main():
     """
     遍历每一页索引页
     """
+    print("cwca_org_spider爬取开始！")
+    print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
     # 读取上次爬取时保存的用于判断爬取位置的字符串
     with open('./judge.txt', 'r', encoding = 'utf-8') as f:
         judge = f.read()
@@ -214,7 +216,8 @@ def main():
         if params == 1:
             break
 
-    print("爬取完毕，脚本退出！")
+    print("cwca_org_spider爬取完毕，脚本退出！")
+    print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
 
 if __name__ == '__main__':
     main()

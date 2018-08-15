@@ -25,150 +25,43 @@ def index_page(page, judge):
     kw_search = {
         'txt_1_value1':'生物',
     }
-    kw_index = {
-        'pagename':'ASP.brief_default_result_aspx',
-        'dbPrefix':'SCDB',
-        'dbCatalog':'中国学术文献网络出版总库',
-        'ConfigFile':'SCDBINDEX.xml',
-        'research':'off',
-        't':str(int(time.time())),
-        'keyValue':'生物',
-        'S':'1'
-    }
-    try:
-        # 先访问search_url与服务器建立一个session会话，保持同一个cookie
-        search_session.get(search_url, params = kw_search, headers = headers)
-        response_index = search_session.get(index_url, params = kw_index, headers = headers)
-        response_index.encoding = 'utf-8'
-    except ConnectionError:
-        print('index_page_ConnectionError:' + index_url)
-    
-    with open('./cnki_net_spider/test.html', 'w', encoding = 'utf-8') as f:
-        f.write(response_index.text)
-    # 通过xpath获取索引页内的文章列表
-    index_html = etree.HTML(response.text)
-    index_source = index_html.xpath('//div[@id = "wq_nr_left1"]/a[1]')
+    # 先访问search_url与服务器建立一个session会话，保持同一个cookie
+    search_session.get(search_url, params = kw_search, headers = headers)
+    for i in range(1,page):
+        curpage =  i
+        lastpage = i*10-10
+        kw_index = {
+            'curpage':curpage,
+            'RecordsPerPage':'50',
+            'QueryID':'0',
+            'ID':'',
+            'turnpage':'1',
+            'tpagemode':'L',
+            'dbPrefix':'SCDB',
+            'Fields':'',
+            'DisplayMode':'listmode',
+            'pagename':'ASP.brief_default_result_aspx'  
+        }   
+        try:
+            response_index = search_session.get(index_url, params = kw_index, headers = headers)
+            response_index.encoding = 'utf-8'
+            time.sleep(3)
+            print(response_index.url)
+        except ConnectionError:
+            print('index_page_ConnectionError:' + index_url)
 
-    # 写入当前爬取到的第一个文章url
-    if page == 0:
-        next_judge = index_source[0].xpath('@href')[0].replace('./','/',)
-        # print('next_judge', next_judge, type(next_judge))
-        
-        with open('./kepu_net_spider/judge.txt', 'w', encoding = 'utf-8') as f:
-            print("next_judge:\t" + next_judge)
-            f.write(next_judge)
+        if i%15==0:
+            time.sleep(300)
+            print('=====sleep=====')
+        with open('./cnki_net_spider/test' + str(i) + '.html', 'w', encoding = 'utf-8') as f:
+            f.write(response_index.text)
+        # 通过xpath获取索引页内的文章列表
 
-    for item in index_source:
-        # 获取索引页内所有文章的url:'./201703/t20170303_25849.html'|/201703/t20170303_25849.html
-        index_url = item.xpath('@href')[0].replace('./','/',)
-        # print("index_url", type(index_url), index_url)
-
-        # 判断是否爬取到上次爬取位置，是的话返回1
-        if index_url == judge:
-            print("已爬取到上次爬取位置！")
-            return 1
-            break
-
-        get_page(index_url)
-
-def get_page(url):
-    """
-    提取文章内容
-    :param url:文章链接
-    """
-    # 组合url
-    full_url = 'http://www.kepu.net.cn/gb/overview' + url
-    # print("full_url", type(full_url), full_url)
-
-    # 获取文章内容
-    headers = {'user-agent':'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)'}
-
-    article_response = requests.get(full_url, headers = headers)
-    article_response.encoding = 'utf-8'
-    time.sleep(1)
-
-    # 通过正则表达式获取文章中需要的内容
-    article_pattern = re.compile(r'<div class="noticecaption1">.*</a></strong></p>', re.S)
-
-    article_result = article_pattern.search(article_response.text)
-    if article_result:
-        article_source = article_result.group()
-
-        # 提取url中的t20160705_4635185作为文件名保存:'./201703/t20170303_25849.html'
-        filename_pattren = re.compile(r'/t(.*html)')
-        filename = filename_pattren.search(url)
-        # print("filename", type(filename), filename)
-
-        # 完整图片url:'./W020161207373102355111.jpg'|http://www.kepu.net.cn/gb/overview/201612/W020161207373102364508.jpg
-        # 获取图片url中的'/201612/'
-        img_url_pattern = re.compile(r'(.*?)t')
-        img_url = img_url_pattern.search(url)
-        # print("img_url", type(img_url), img_url)
-
-        # 获取文章中所有的图片url链接:'./W020161207373102355111.jpg'
-        img_pattern = re.compile(r'<img style(.*?) src="./(.*?)"', re.S)
-        img_findall = img_pattern.findall(article_source)
-        for kw in img_findall:
-            # 组合url
-            # img_url.group(1):'/201703/', kw[1]:'W020170303482818708456.png'
-            img_full_url = 'http://www.kepu.net.cn/gb/overview' + img_url.group(1) + kw[1]
-            # print("img_full_url", type(img_full_url), img_full_url)
-            
-            try:
-                # 获取图片
-                img_response = requests.get(img_full_url, headers = headers).content
-                img_save_name = kw[1]
-
-                # 保存图片
-                save_img(img_response, img_save_name)
-            except ConnectionError:
-                print('图片网址有误:' + img_full_url)
-
-        def img_url_name(match):
-            """
-            匹配文章内容中的图片url，替换为本地url
-            """
-            # ./W020170303482818708456.png
-            img_real_pattern = re.compile(r'.[pjb][pnm]')
-            img_real_name = img_real_pattern.search(match.group())
-            # print("img_real_name", type(img_real_name), img_real_name)
-
-            if img_real_name is not None:
-                img_sub_pattern = re.compile('.*\/(\w+.*?\.\w+)')
-                img_sub_name = img_sub_pattern.search(match.group())
-                img_name  = ' src="./img/' + img_sub_name.group(1) + '"'
-                # print("img_name", type(img_name), img_name)
-
-                return img_name
-
-        # 匹配文章内容中的图片url，替换为本地图片url
-        # img_pattern = re.compile(r'<img(.*?)\ssrc="(.*?)"', re.S)
-        img_real_pattern = re.compile('\ssrc="(.*?)"')
-        real_result = img_real_pattern.sub(img_url_name, article_source)
-
-        # 保存文章内容 
-        save_page(real_result, filename.group(1))
-
-    else:
-        print('get_page_error:' + full_url)
-
-def save_img(result, filename):
-    """
-    保存文章中的图片
-    :param result: 图片文件
-    :param filename: 保存的图片名
-    """
-    img_save_full_name = './kepu_net_spider/kepu_net_spider_result/img/' + filename 
-    with open(img_save_full_name, 'wb') as f:
-        f.write(result)  
-        
-def save_page(html,filename):
-    """
-    保存到文件
-    :param html: 结果
-    """
-    with open('./kepu_net_spider/kepu_net_spider_result/' + filename, 'w', encoding = 'utf-8') as f:
-        f.write(html)
+# 索引页的文章列表，10个a标签
+# //a[@class = "fz14"]
+# 11.2184.Q.20180813.1709.003
+# 获取的文章通过最后的这个ID进行索引
+# http://kns.cnki.net/KCMS/detail/11.2184.Q.20180813.1709.003.html
 
 def main():
     """
@@ -179,12 +72,12 @@ def main():
             judge = f.read()
     # judge = 2
 
-    for i in range(6):
-        params = index_page(i, judge)
-        if params == 1:
-            break
-        print('保存第', str(i+1), '页索引页所有文章成功')  
-
+    # for i in range(6):
+    # params = index_page(56, judge)
+    params = index_page(20, judge)
+    # if params == 1:
+        # break
+    # print('保存第', str(i+1), '页索引页所有文章成功')  
     print("爬取完毕，脚本退出！")
 
 if __name__ == '__main__':

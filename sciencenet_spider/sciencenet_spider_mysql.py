@@ -12,7 +12,6 @@ import requests
 import pymysql
 from requests.exceptions import ConnectionError
 import re
-import config_mysql
 #import os
 
 # 构造一个 WebDriver 对象，调用phantomjs
@@ -22,13 +21,13 @@ browser = webdriver.PhantomJS(executable_path=r'/home/bmnars/spider_porject/scie
 wait = WebDriverWait(browser, 10)
 
 
-def index_page(page, judge):
+def index_page(page, judge, judge_name, url, judge_width):
     """
     抓取索引页
     :param page: 页码
     :param judge: 用于判断上次爬取位置
     """
-    print('正在爬取第', page, '页索引页')
+    print('正在爬取第', page, '页索引页————>\t' + judge_name)
     try:
         #url_list = ['http://paper.sciencenet.cn/paper/fieldlist.aspx?id=2','http://news.sciencenet.cn/fieldlist.aspx?id=3']
         #for url in url_list:
@@ -37,7 +36,7 @@ def index_page(page, judge):
         # 领域新闻链接
         # url = 'http://news.sciencenet.cn/fieldlist.aspx?id=3'
         # config_mysql.url为url链接
-        browser.get(config_mysql.url)
+        browser.get(url)
 
         # 判断页码
         if page > 1:
@@ -56,15 +55,13 @@ def index_page(page, judge):
         # 判断当前高亮页是否为传递过去的参数page
         wait.until(EC.text_to_be_present_in_element_value((By.NAME, 'AspNetPager1_input'), str(page)))
         # 判断是否爬取到上次爬取位置，是的话返回1
-        return get_pages(page, judge)
+        return get_pages(page, judge, judge_name, judge_width)
     except TimeoutException:
-        print('爬取第', page, '页索引页time out,尝试重新爬取!')
+        print('爬取第', page, '页索引页time out,尝试重新爬取!————> \t ' + judge_name)
         # 如果timeout，尝试重新获取页面
-        index_page(page, judge)
+        index_page(page, judge, judge_name, url, judge_width)
         
-
-
-def get_pages(page, judge):
+def get_pages(page, judge, judge_name, judge_width):
     """
     提取文章内容
     :param page: 页码
@@ -81,9 +78,9 @@ def get_pages(page, judge):
         # next_judge = items[0].xpath('.//td[@width = "60%"]/a/@href')[0]
         # 论文为 @width = "70%"
         # config_mysql.judge_width为不同宽度，即： @width = "60%" | @width = "70%"
-        next_judge = items[0].xpath('.//td[' + config_mysql.judge_width + ']/a/@href')[0]
-        with open(config_mysql.judge_file_name, 'w', encoding = 'utf-8') as f:
-            print("next_judge:\t" + next_judge)
+        next_judge = items[0].xpath('.//td[' + judge_width + ']/a/@href')[0]
+        with open(judge_name, 'w', encoding = 'utf-8') as f:
+            print(judge_name + "\t<————next_judge————>\t" + next_judge)
             f.write(next_judge)
 
     # 提取每一个文章的url
@@ -99,12 +96,12 @@ def get_pages(page, judge):
         # 领域新闻为 @width = "60%" ，
         # kw = item.xpath('.//td[@width = "60%"]/a/@href')[0]
         # 论文为 @width = "70%"
-        kw = item.xpath('.//td[' + config_mysql.judge_width + ']/a/@href')[0]
+        kw = item.xpath('.//td[' + judge_width + ']/a/@href')[0]
         #title = item.xpath('.//td[@width = "60%"]/a')[0].text.replace('\n','').replace(' ','')
 
         # 判断是否爬取到上次爬取位置，是的话返回1
         if kw == judge:
-            print("已爬取到上次爬取位置！")
+            print("已爬取到上次爬取位置！————>\t" + judge_name)
             return 1
             break
 
@@ -177,7 +174,7 @@ def get_pages(page, judge):
         save_page(real_result, filename)
         save_mysql(url,filename)
 
-    print('保存第', page, '页索引页所有文章成功') 
+    print('保存第', page, '页索引页所有文章成功!————>\t' + judge_name) 
     
     
 
@@ -240,18 +237,36 @@ def main():
     """
     遍历每一页索引页
     """
-    # 读取上次爬取时保存的用于判断爬取位置的字符串
-    with open(config_mysql.judge_file_name, 'r', encoding = 'utf-8') as f:
-            judge = f.read()
-    for i in range(1, config_mysql.num):
-        params = index_page(i, judge)
-        if params == 1:
-            break
-    
-    print("爬取完毕，脚本退出！")
+    print("sciencenet_spider爬取开始！")
+    print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
+    for wd in range(2):
+        # 论文
+        if wd == 0:
+            # 论文链接
+            url = 'http://paper.sciencenet.cn/paper/fieldlist.aspx?id=2'
+            # 论文为 @width = "70%"
+            judge_width = '@width = "70%"'
+            # 论文为总页数为259
+            num = 7
+            # 领域新闻的判断文件名
+            judge_name = './paper_url_judge.txt'
+        if wd == 1:
+            url = 'http://news.sciencenet.cn/fieldlist.aspx?id=3'
+            judge_width = '@width = "60%"'
+            num = 51
+            judge_name = './news_url_judge.txt'
 
-        
+        # 读取上次爬取时保存的用于判断爬取位置的字符串
+        with open(judge_name, 'r', encoding = 'utf-8') as f:
+            judge = f.read()
+        for i in range(1, num):
+            params = index_page(i, judge, judge_name, url, judge_width)
+            if params == 1:
+                break
+
     browser.close()
+    print("sciencenet_spider爬取完毕，脚本退出！")
+    print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
 
 
 if __name__ == '__main__':
