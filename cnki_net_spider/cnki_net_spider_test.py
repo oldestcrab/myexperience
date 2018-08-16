@@ -25,11 +25,6 @@ def index_page(page, judge):
     kw_search = {
         'txt_1_value1':'生物',
     }
-<<<<<<< HEAD
-    # 先访问search_url与服务器建立一个session会话，保持同一个cookie
-    search_session.get(search_url, params = kw_search, headers = headers)
-    for i in range(1,page):
-=======
     for i in range(1,page):
         judge_times = True
         if i == 1:
@@ -41,7 +36,6 @@ def index_page(page, judge):
         if not judge_times:
             # 先访问search_url与服务器建立一个session会话，保持同一个cookie
             search_session.get(search_url, params = kw_search, headers = headers)
->>>>>>> 06e3cd190fcb79165cdf71c05ec215ce99be8416
         curpage =  i
         lastpage = i*10-10
         kw_index = {
@@ -63,13 +57,6 @@ def index_page(page, judge):
             print(response_index.url)
         except ConnectionError:
             print('index_page_ConnectionError:' + index_url)
-<<<<<<< HEAD
-
-        if i%15==0:
-            time.sleep(300)
-            print('=====sleep=====')
-=======
->>>>>>> 06e3cd190fcb79165cdf71c05ec215ce99be8416
         with open('./cnki_net_spider/test' + str(i) + '.html', 'w', encoding = 'utf-8') as f:
             f.write(response_index.text)
         # 通过xpath获取索引页内的文章列表
