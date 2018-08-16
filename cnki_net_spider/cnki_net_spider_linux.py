@@ -79,7 +79,7 @@ def index_page(page, judge):
         # 写入当前爬取到的第一个文章url
         if i == 1:
             next_judge = index_source[0]
-            with open('./cnki_net_spider/judge.txt', 'w', encoding = 'utf-8') as f:
+            with open('./judge.txt', 'w', encoding = 'utf-8') as f:
                 print("next_judge:\t" + next_judge)
                 f.write(next_judge)
 
@@ -145,7 +145,7 @@ def save_page(kw):
     保存文章内容
     :param kw:提取出来的关键字
     """
-    with open('cnki_net_spider/kw.txt', 'a', encoding = 'utf-8') as f:
+    with open('./kw.txt', 'a', encoding = 'utf-8') as f:
         f.write(kw + '\n')
 
 def main():
@@ -156,7 +156,7 @@ def main():
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
 
     # 读取上次爬取时保存的用于判断爬取位置的字符串
-    with open('./cnki_net_spider/judge.txt', 'r', encoding = 'utf-8') as f:
+    with open('./judge.txt', 'r', encoding = 'utf-8') as f:
             judge = f.read()
 
     index_page(100, judge)

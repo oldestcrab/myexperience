@@ -78,7 +78,7 @@ def main():
 
     # for i in range(6):
     # params = index_page(56, judge)
-    params = index_page(20, judge)
+    index_page(20, judge)
     # if params == 1:
         # break
     # print('保存第', str(i+1), '页索引页所有文章成功')  
