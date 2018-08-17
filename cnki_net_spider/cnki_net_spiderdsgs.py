@@ -19,23 +19,37 @@ def index_page(page, judge):
     search_url = r'http://kns.cnki.net/kns/request/SearchHandler.ashx?action=&NaviCode=*&ua=1.11&PageName=ASP.brief_default_result_aspx&DbPrefix=SCDB&DbCatalog=%E4%B8%AD%E5%9B%BD%E5%AD%A6%E6%9C%AF%E6%96%87%E7%8C%AE%E7%BD%91%E7%BB%9C%E5%87%BA%E7%89%88%E6%80%BB%E5%BA%93&ConfigFile=SCDBINDEX.xml&db_opt=CJFQ%2CCDFD%2CCMFD%2CCPFD%2CIPFD%2CCCND%2CCCJD&txt_1_sel=SU%24%25%3D|&txt_1_special1=%25&his=0&parentdb=SCDB&__=Thu%20Aug%2009%202018%2015%3A36%3A52%20GMT%2B0800%20(%E4%B8%AD%E5%9B%BD%E6%A0%87%E5%87%86%E6%97%B6%E9%97%B4)'
     # 索引页url
     index_url = 'http://kns.cnki.net/kns/brief/brief.aspx'
-    headers = {'user-agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36'}
+    headers1 = {'user-agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36'}
+    headers2 = {'user-agent':'Opera/9.80 (Macintosh; Intel Mac OS X; U; nl) Presto/2.6.30 Version/10.61'}
     # kw_search为search_url的参数，kw_index为index_url的参数，注意：修改kw_search中txt_1_value1的值才会真正返回修改后的搜索结果，kw_index中的keyValue修改与否没有影响。
     # 例如：'txt_1_value1':'生物'，'keyValue':'化学'  ，真正的搜素结果为生物
     kw_search = {
         'txt_1_value1':'生物',
     }
     for i in range(1,page):
+        print(i)
         judge_times = True
         if i == 1:
+            
             judge_times = False
+            headerss = headers1
         elif i%15==0:
-            print('=====sleeping300s=====')
-            time.sleep(300)
+            print('=====change user-agent=====')
             judge_times = False
+            if i%2==0:
+                headerss = headers1
+                print(str(i),headerss)
+            else:
+                headerss = headers2
+                print(str(i),headerss)
         if not judge_times:
             # 先访问search_url与服务器建立一个session会话，保持同一个cookie
-            search_session.get(search_url, params = kw_search, headers = headers)
+            print('get session——————————————————————————————————————' + str(i))
+            print(headerss)
+            print('get session——————————————————————————————————————')
+
+            asf = search_session.get(search_url, params = kw_search, headers = headerss)
+            print(asf.status_code, asf.url)
         curpage =  i
         lastpage = i*10-10
         kw_index = {
@@ -51,9 +65,10 @@ def index_page(page, judge):
             'pagename':'ASP.brief_default_result_aspx'  
         }   
         try:
-            response_index = search_session.get(index_url, params = kw_index, headers = headers)
+            print(headerss)
+            response_index = search_session.get(index_url, params = kw_index, headers = headerss)
             response_index.encoding = 'utf-8'
-            time.sleep(3)
+            time.sleep(2)
             print(response_index.url)
         except ConnectionError:
             print('index_page_ConnectionError:' + index_url)

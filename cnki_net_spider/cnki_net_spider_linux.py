@@ -29,7 +29,8 @@ def index_page(page, judge):
     # judge_last_spider：用于判断是否爬取到上次爬取位置
     judge_last_spider = True
     
-    for i in range(1,page):       
+    for i in range(1,page):
+        print('开始爬取第' + str(i) + '页！')       
         if not judge_last_spider:
             break
 
@@ -132,8 +133,10 @@ def get_page(url):
     # 有的文章没有关键字，先确认有没有
     if kw_article:
         for kw in kw_article:
-            kw_real = re.sub('\s|;','',kw.text)
-
+            try:
+                kw_real = re.sub('\s|;','',kw.text)
+            except TypeError:
+                print('suberror')
             # 保存文章内容 
             save_page(kw_real)
 
@@ -145,7 +148,7 @@ def save_page(kw):
     保存文章内容
     :param kw:提取出来的关键字
     """
-    with open('./kw.txt', 'a', encoding = 'utf-8') as f:
+    with open('./keyword.txt', 'a', encoding = 'utf-8') as f:
         f.write(kw + '\n')
 
 def main():
