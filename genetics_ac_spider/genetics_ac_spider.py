@@ -7,28 +7,29 @@ from lxml import etree
 from requests import ConnectionError
 
 
-def index_page(page, judge):
+def index_page(page, judge, judge_name, url_kw):
     """
     爬取索引页
     :param page:页码
     :param judge: 用于判断上次爬取位置
+    :param judge_name: 判断爬取位置的数据保存名
+    :param url_kw: 不同分类下的url
     """
     
     # judge_last_spider：用于判断是否爬取到上次爬取位置
     judge_last_spider = True
     
     for i in range(1,page):    
-        print('正在爬取第' + str(i) + '页！')
-
+        # 如果judge_last_spider为False，则退出循环！
         if not judge_last_spider:
             break
+        print('正在爬取第' + str(i) + '页！\t' + judge_name)
 
         # 判断url是否需要拼接
-        judge_times = True
         if i == 1:
-            url = 'http://www.genetics.ac.cn/xwzx/kyjz/index.html'
+            url = url_kw + 'index.html'
         else:
-            url = 'http://www.genetics.ac.cn/xwzx/kyjz/index_' + str(i-1) + '.html'
+            url = url_kw + 'index_' + str(i-1) + '.html'
         headers = {'user-agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36'}
 
         try:
@@ -46,10 +47,10 @@ def index_page(page, judge):
 
         # 写入当前爬取到的第一个文章url
         if i == 1:
-            next_judge = source_index[0]
-            with open('genetics_ac_spider/judge.txt', 'w', encoding = 'utf-8') as f:
-                print("next_judge:\t" + next_judge)
-                f.write(next_judge)
+            judge_next = source_index[0]
+            with open('genetics_ac_spider/' + judge_name, 'w', encoding = 'utf-8') as f:
+                print("judge_next:\t" + judge_next)
+                f.write(judge_next)
 
         for item in source_index:
             # 判断是否爬取到上次爬取位置,是的话judge_last_spider赋值为False      
@@ -60,95 +61,104 @@ def index_page(page, judge):
 
             # item: ./201804/t20180424_5001331.html
             # print('item:', item, type(item))
-            get_page(item)
+            get_page(item, url_kw)
         
-
-def get_page(url):
+def get_page(url, url_kw):
     """
     提取文章内容
     :param url:文章假链接、提供真链接需要的参数
+    :param url_kw: 不同分类下的url
     """
-    # item:./201804/t20180424_5001331.html
+    # url:./201804/t20180424_5001331.html
     # url_full：http://www.genetics.ac.cn/xwzx/kyjz/201808/t20180817_5056985.html
-    url_replace = url.replace('./','')
-    url_full = 'http://www.genetics.ac.cn/xwzx/kyjz/' + url_replace
+    url_full = url_kw + url.replace('./','')
     # print(url_full)
     headers = {'user-agent':'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)'}
 
     # 获取文章
-    article_response = requests.get(url_full, headers = headers)
-    article_response.encoding = 'utf-8'
+    response_article = requests.get(url_full, headers = headers)
+    response_article.encoding = 'utf-8'
     time.sleep(1)
 
     # 通过正则表达式获取文章中需要的内容
-    article_pattern = re.compile(r'<td align="center" valign="top" bgcolor="#FFFFFF" class="right_wrap">.*<td align="center" class="article_page">', re.S)
+    pattren_article = re.compile(r'<td align="center" valign="top" bgcolor="#FFFFFF" class="right_wrap">.*<td align="center" class="article_page">', re.S)
+    source_article = pattren_article.search(response_article.text)
 
-    article_result = article_pattern.search(article_response.text)
-    if article_result:
-        article_source = article_result.group()
+    if source_article:
+        source_article = source_article.group()
+        # url_img.group(1):http://www.genetics.ac.cn/xwzx/kyjz/201808
+        pattren_url_img = re.compile(r'(.*?)/t')
+        url_img = pattren_url_img.search(url_full)
 
-        # 提取url中的t20160705_4635185作为文件名保存:'./201804/t20180424_5001331.html
-        filename_pattren = re.compile(r'/t(.*.html)')
-        filename = filename_pattren.search(url)
-        print(filename.group(1))
+        # 获取文章中所有的图片url链接:'./W020180817816737248277.jpg'
+        pattern_img = re.compile(r'<img(.*?)\ssrc="(.*?)"', re.S)
+        findall_img = pattern_img.findall(source_article)
+        for kw in findall_img:
+            # kw: ./W020180817816737248277.jpg
 
-        # 完整图片url:http://www.genetics.ac.cn/xwzx/kyjz/201808/W020180817816737360251.jpg
-        # img_url.group(1):http://www.genetics.ac.cn/xwzx/kyjz/201808
-        img_url_pattern = re.compile(r'(.*?)/t')
-        img_url = img_url_pattern.search(url_full)
-        print(img_url.group(1))
-        # 获取文章中所有的图片url链接:'W020180629309956323903.jpg'
-        img_pattern = re.compile(r'<img style(.*?)src="(.*?)"', re.S)
-        img_findall = img_pattern.findall(article_source)
-        for kw in img_findall:
-            # 组合url
-            img_full_url = 'http://www.ioz.ac.cn/xwzx/kyjz' + img_url.group(1) + kw[1]
+            # 判断图片URL是否需要组合
+            pattern_judge_img = re.compile(r'http')
+            judge_img = pattern_judge_img.search(kw[1])
+            # url_full_img: http://www.genetics.ac.cn/xwzx/kyjz/201808/W020180817816737248277.jpg
+            if judge_img is None:
+                url_full_img =  url_img.group(1) + kw[1].replace('./','/')
+            else:
+                url_full_img = kw[1]
 
             try:
                 # 获取图片
-                img_response = requests.get(img_full_url, headers = headers).content
-                img_save_name = kw[1]
-
+                response_img = requests.get(url_full_img, headers = headers).content
+                # name_save_img: W020180817816737248277.jpg
+                name_save_img = kw[1].replace('./','')
                 # 保存图片
-                save_img(img_response, img_save_name)
+                save_img(response_img, name_save_img)
             except ConnectionError:
-                print('图片网址有误:' + img_full_url)
+                print('图片网址有误:' + url_full_img)
 
-        def img_url_name(match):
+        def url_img_name(match):
             """
             匹配文章内容中的图片url，替换为本地url
             """
-            # ./img/W020180622376479527977.jpg
-            img_name  = 'src="./img/W' + match.group(1)
-            # img_sub = img_pattern.sub(img_name, match)
-            return img_name
+            # ./W020180824389610980729.jpg
+            pattren_img_local = re.compile(r'.[pjb][pnm]')
+            img_real_name = pattren_img_local.search(match.group())
+
+            if img_real_name is not None:
+                img_name  = ' src="./img/' + match.group(1).replace('./','') + '"'
+                return img_name
 
         # 匹配文章内容中的图片url，替换为本地图片url
-        img_name_pattern = re.compile(r'src="./W(.*?.[jpg, png]")',re.I)
-        real_result = img_name_pattern.sub(img_url_name, article_source)
+        pattren_img_local = re.compile('\ssrc="(.*?)"')
+        source_local = pattren_img_local.sub(url_img_name, source_article)
+
+        # 提取url中的20180424_5001331.html作为文件名保存: ./201804/t20180424_5001331.html
+        pattren_filename = re.compile(r'/t(.*.html)')
+        filename = pattren_filename.search(url)
 
         # 保存文章内容 
-        save_page(real_result, filename.group(1))
-    else:
-        print('error:' + full_url)
+        save_page(source_local, filename.group(1))
 
-def save_img(result, filename):
+    else:
+        print('error:' + url_full)
+
+def save_img(source, filename):
     """
     保存文章中的图片
-    :param result: 图片文件
+    :param source: 图片文件
     :param filename: 保存的图片名
     """
-    img_save_full_name = './ioz_ac_spider/ioz_ac_spider_result/img/' + filename 
-    with open(img_save_full_name, 'wb') as f:
-        f.write(result)  
+    name_save_img = 'genetics_ac_spider/genetics_ac_spider_result/img/' + filename 
+    with open(name_save_img, 'wb') as f:
+        f.write(source)  
         
-def save_page(html,filename):
+def save_page(source,filename):
     """
     保存到文件
-    :param html: 结果
+    :param source: 结果
+    :param filename: 保存的文件名
     """
-    with open('./ioz_ac_spider/ioz_ac_spider_result/' + filename + '.html', 'w', encoding = 'utf-8') as f:
-        f.write(html)
+    with open('genetics_ac_spider/genetics_ac_spider_result/' + filename, 'w', encoding = 'utf-8') as f:
+        f.write(source)
 
 def main():
     """
@@ -157,11 +167,21 @@ def main():
     print("genetics_ac_spider爬取开始！")
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
 
+    # 用for循环遍历爬取不同分类下的文章
+    for wd in range(2):
     # 读取上次爬取时保存的用于判断爬取位置的字符串
-    # with open('genetics_ac_spider/judge.txt', 'r', encoding = 'utf-8') as f:
-    #         judge = f.read()
-    judge = 2
-    index_page(2, judge)
+        if wd == 0:
+            judge_name = 'judge_xwzx.txt'
+            url_kw = 'http://www.genetics.ac.cn/xwzx/'
+            num = 2
+        if wd == 1:
+            judge_name = 'judge_kyjz.txt'
+            url_kw = 'http://www.genetics.ac.cn/xwzx/kyjz/'
+            num = 3
+
+        with open('genetics_ac_spider/' + judge_name, 'r', encoding = 'utf-8') as f:
+                judge = f.read()
+        index_page(num, judge, judge_name, url_kw)
 
     print("genetics_ac_spider爬取完毕，脚本退出！")
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
