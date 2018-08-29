@@ -59,7 +59,7 @@ def index_page(page, judge, judge_name, url_kw):
                 judge_last_spider = False
                 break
 
-            # item: ./201804/t20180424_5001331.html
+            # item: ./201804/t20180428_5004366.html
             # print('item:', item, type(item))
             get_page(item, url_kw)
         
@@ -69,8 +69,8 @@ def get_page(url, url_kw):
     :param url:文章假链接、提供真链接需要的参数
     :param url_kw: 不同分类下的url
     """
-    # url:./201804/t20180424_5001331.html
-    # url_full：http://www.genetics.ac.cn/xwzx/kyjz/201808/t20180817_5056985.html
+    # url:./201804/t20180428_5004366.html
+    # url_full：http://www.whiov.ac.cn/xwdt_105286/kydt/201804/t20180428_5004366.html
     url_full = url_kw + url.replace('./','')
     # print(url_full)
     headers = {'user-agent':'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)'}
@@ -81,35 +81,38 @@ def get_page(url, url_kw):
     time.sleep(1)
 
     # 通过正则表达式获取文章中需要的内容
-    pattren_article = re.compile(r'<td align="center" valign="top" bgcolor="#FFFFFF" class="right_wrap">.*<td align="center" class="article_page">', re.S)
+    pattren_article = re.compile(r'<div class="xl_content">.*<div class="fenyedisplay-1"', re.S)
     source_article = pattren_article.search(response_article.text)
 
     if source_article:
         source_article = source_article.group()
-        # url_img.group(1):http://www.genetics.ac.cn/xwzx/kyjz/201808
+        # url_img.group(1):http://www.whiov.ac.cn/xwdt_105286/kydt/201804
         pattren_url_img = re.compile(r'(.*?)/t')
         url_img = pattren_url_img.search(url_full)
 
-        # 获取文章中所有的图片url链接:'./W020180817816737248277.jpg'
+        # 获取文章中所有的图片url链接:'./W020131016426608541479.jpg'
         pattern_img = re.compile(r'<img(.*?)\ssrc="(.*?)"', re.S)
         findall_img = pattern_img.findall(source_article)
         for kw in findall_img:
-            # kw: ./W020180817816737248277.jpg
+            # kw: ./W020131016426608541479.jpg
 
             # 判断图片URL是否需要组合
             pattern_judge_img = re.compile(r'http')
             judge_img = pattern_judge_img.search(kw[1])
-            # url_full_img: http://www.genetics.ac.cn/xwzx/kyjz/201808/W020180817816737248277.jpg
+            # url_full_img:http://www.whiov.ac.cn/xwdt/kydt/201306/W020131016426608541479.jpg
             if judge_img is None:
+                # 图片网址：url_full_img
                 url_full_img =  url_img.group(1) + kw[1].replace('./','/')
+                # 图片保存名：name_save_img: W020131016426608541479.jpg
+                name_save_img = kw[1].replace('./','')
             else:
                 url_full_img = kw[1]
-
+                pattern_name_save_img = re.compile(r'.*?(\w+.[jpbg][pmin]\w+)')
+                name_save_img = pattern_name_save_img.search(kw[1]).group(1)
+            # print(url_full_img)
             try:
                 # 获取图片
                 response_img = requests.get(url_full_img, headers = headers).content
-                # name_save_img: W020180817816737248277.jpg
-                name_save_img = kw[1].replace('./','')
                 # 保存图片
                 save_img(response_img, name_save_img)
             except ConnectionError:
@@ -119,8 +122,8 @@ def get_page(url, url_kw):
             """
             匹配文章内容中的图片url，替换为本地url
             """
-            # ./W020180824389610980729.jpg
-            pattren_img_local = re.compile(r'.[pjb][pnm]')
+            # ./W020131016426608541479.jpg
+            pattren_img_local = re.compile(r'.[pjbg][pinm]')
             img_real_name = pattren_img_local.search(match.group())
 
             if img_real_name is not None:
@@ -131,7 +134,7 @@ def get_page(url, url_kw):
         pattren_img_local = re.compile('\ssrc="(.*?)"')
         source_local = pattren_img_local.sub(url_img_name, source_article)
 
-        # 提取url中的20180424_5001331.html作为文件名保存: ./201804/t20180424_5001331.html
+        # 提取url中的20180424_5001331.html作为文件名保存: ./201804/t20180428_5004366.html
         pattren_filename = re.compile(r'/t(.*.html)')
         filename = pattren_filename.search(url)
 
@@ -148,17 +151,24 @@ def save_img(source, filename):
     :param filename: 保存的图片名
     """
     name_save_img = 'whiov_ac_spider/whiov_ac_spider_result/img/' + filename 
-    with open(name_save_img, 'wb') as f:
-        f.write(source)  
-        
+    try:
+        # 保存图片
+        with open(name_save_img, 'wb') as f:
+            f.write(source)  
+    except OSError as e:
+        print('图片保存失败：' + name_save_img +'\n{e}'.format(e = e))
+
 def save_page(source,filename):
     """
     保存到文件
     :param source: 结果
     :param filename: 保存的文件名
     """
-    with open('whiov_ac_spider/whiov_ac_spider_result/' + filename, 'w', encoding = 'utf-8') as f:
-        f.write(source)
+    try:
+        with open('whiov_ac_spider/whiov_ac_spider_result/' + filename, 'w', encoding = 'utf-8') as f:
+            f.write(source)
+    except  OSError as e:
+        print('内容保存失败：' + filename + '\n{e}'.format(e = e))
 
 def main():
     """
