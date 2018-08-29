@@ -1,0 +1,226 @@
+# -*- encoding:utf-8 -*-
+
+import re
+import time
+import requests
+from lxml import etree
+from requests import ConnectionError
+import pymysql
+
+def index_page(page, judge, judge_name, url_kw):
+    """
+    爬取索引页
+    :param page:页码
+    :param judge: 用于判断上次爬取位置
+    :param judge_name: 判断爬取位置的数据保存名
+    :param url_kw: 不同分类下的url
+    """
+    
+    # judge_last_spider：用于判断是否爬取到上次爬取位置
+    judge_last_spider = True
+    
+    for i in range(1,page):    
+        # 如果judge_last_spider为False，则退出循环！
+        if not judge_last_spider:
+            break
+        print('正在爬取第' + str(i) + '页！\t' + judge_name)
+
+        # 判断url是否需要拼接
+        if i == 1:
+            url = url_kw + 'index.html'
+        else:
+            url = url_kw + 'index_' + str(i-1) + '.html'
+        headers = {'user-agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36'}
+
+        try:
+            # 获取索引页
+            response_index = requests.get(url, headers = headers)
+            response_index.encoding = 'utf-8'
+            # time.sleep(2)
+            # print(response_index.url)
+        except ConnectionError:
+            print('index_page_ConnectionError:' + url)
+
+        # 通过xpath获取索引页内的文章列表url
+        html_index = etree.HTML(response_index.text)
+        source_index = html_index.xpath('//td[@class = "right_wrap" ]//td[@align = "left"]//a/@href')
+
+        # 写入当前爬取到的第一个文章url
+        if i == 1:
+            judge_next = source_index[0]
+            with open('./' + judge_name, 'w', encoding = 'utf-8') as f:
+                print("judge_next:\t" + judge_next)
+                f.write(judge_next)
+
+        for item in source_index:
+            # 判断是否爬取到上次爬取位置,是的话judge_last_spider赋值为False      
+            if item == judge:
+                print("已爬取到上次爬取位置！")
+                judge_last_spider = False
+                break
+
+            # item: ./201804/t20180424_5001331.html
+            # print('item:', item, type(item))
+            get_page(item, url_kw)
+        
+def get_page(url, url_kw):
+    """
+    提取文章内容
+    :param url:文章假链接、提供真链接需要的参数
+    :param url_kw: 不同分类下的url
+    """
+    # url:./201804/t20180424_5001331.html
+    # url_full：http://www.genetics.ac.cn/xwzx/kyjz/201808/t20180817_5056985.html
+    url_full = url_kw + url.replace('./','')
+    # print(url_full)
+    headers = {'user-agent':'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)'}
+
+    # 获取文章
+    response_article = requests.get(url_full, headers = headers)
+    response_article.encoding = 'utf-8'
+    time.sleep(1)
+
+    # 通过正则表达式获取文章中需要的内容
+    pattren_article = re.compile(r'<td align="center" valign="top" bgcolor="#FFFFFF" class="right_wrap">.*<td align="center" class="article_page">', re.S)
+    source_article = pattren_article.search(response_article.text)
+
+    if source_article:
+        source_article = source_article.group()
+        # url_img.group(1):http://www.genetics.ac.cn/xwzx/kyjz/201808
+        pattren_url_img = re.compile(r'(.*?)/t')
+        url_img = pattren_url_img.search(url_full)
+
+        # 获取文章中所有的图片url链接:'./W020180817816737248277.jpg'
+        pattern_img = re.compile(r'<img(.*?)\ssrc="(.*?)"', re.S)
+        findall_img = pattern_img.findall(source_article)
+        for kw in findall_img:
+            # kw: ./W020180817816737248277.jpg
+
+            # 判断图片URL是否需要组合
+            pattern_judge_img = re.compile(r'http')
+            judge_img = pattern_judge_img.search(kw[1])
+            # url_full_img: http://www.genetics.ac.cn/xwzx/kyjz/201808/W020180817816737248277.jpg
+            if judge_img is None:
+                url_full_img =  url_img.group(1) + kw[1].replace('./','/')
+            else:
+                url_full_img = kw[1]
+
+            try:
+                # 获取图片
+                response_img = requests.get(url_full_img, headers = headers).content
+                # name_save_img: W020180817816737248277.jpg
+                name_save_img = kw[1].replace('./','')
+                # 保存图片
+                save_img(response_img, name_save_img)
+            except ConnectionError:
+                print('图片网址有误:' + url_full_img)
+
+        def url_img_name(match):
+            """
+            匹配文章内容中的图片url，替换为本地url
+            """
+            # ./W020180824389610980729.jpg
+            pattren_img_local = re.compile(r'.[pjb][pnm]')
+            img_real_name = pattren_img_local.search(match.group())
+
+            if img_real_name is not None:
+                img_name  = ' src="/home/bmnars/data/genetics_ac_spider_result/img/' + match.group(1).replace('./','') + '"'
+                return img_name
+
+        # 匹配文章内容中的图片url，替换为本地图片url
+        pattren_img_local = re.compile('\ssrc="(.*?)"')
+        source_local = pattren_img_local.sub(url_img_name, source_article)
+
+        # 提取url中的20180424_5001331.html作为文件名保存: ./201804/t20180424_5001331.html
+        pattren_filename = re.compile(r'/t(.*.html)')
+        filename = pattren_filename.search(url)
+
+        # 保存文章内容 
+        save_page(source_local, filename.group(1))
+        save_mysql(url_full, filename.group(1))
+    else:
+        print('error:' + url_full)
+
+def save_img(source, filename):
+    """
+    保存文章中的图片
+    :param source: 图片文件
+    :param filename: 保存的图片名
+    """
+    name_save_img = '/home/bmnars/data/genetics_ac_spider_result/img/' + filename 
+    with open(name_save_img, 'wb') as f:
+        f.write(source)  
+        
+def save_page(source,filename):
+    """
+    保存到文件
+    :param source: 结果
+    :param filename: 保存的文件名
+    """
+    with open('/home/bmnars/data/genetics_ac_spider_result/' + filename, 'w', encoding = 'utf-8') as f:
+        f.write(source)
+
+def save_mysql(url_source, url_local):
+    """
+    保存到文件
+    :param url_source: 文章来源url
+    :param url_local: 文章本地url
+    """
+    db = pymysql.connect(host='localhost', user='bmnars', password='vi93nwYV', port=3306, db='bmnars')
+    cursor = db.cursor()
+    url_local_full = '/home/bmnars/data/genetics_ac_spider_result/' + url_local 
+    update_time = time.strftime('%Y-%m-%d',time.localtime())
+    data = {
+        'source_url':url_source,
+        'local_url':url_local_full,
+        'source':'www.genetics.ac.cn',
+	    'update_time':update_time
+    }
+    table = '_cs_bmnars_link'
+    keys = ','.join(data.keys())
+    values = ','.join(['%s']*len(data))
+    sql = 'INSERT INTO {table}({keys}) VALUES ({values}) on duplicate key update '.format(table=table, keys=keys, values=values)
+    update = ', '.join(['{key} = %s'.format(key=key) for key in data]) + ';'
+    sql += update
+    # print(sql)
+    try:
+        if cursor.execute(sql,tuple(data.values())*2):
+            db.commit()
+    except:
+        print("save_mysql_failed:" + url_source)
+        db.rollback()
+    
+    finally:
+        cursor.close()      
+        db.close()
+
+
+def main():
+    """
+    遍历每一页索引页
+    """
+    print("genetics_ac_spider爬取开始！")
+    print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
+
+    # 用for循环遍历爬取不同分类下的文章
+    for wd in range(2):
+    # 读取上次爬取时保存的用于判断爬取位置的字符串
+        if wd == 0:
+            judge_name = 'judge_xwzx.txt'
+            url_kw = 'http://www.genetics.ac.cn/xwzx/'
+            num = 2
+        if wd == 1:
+            judge_name = 'judge_kyjz.txt'
+            url_kw = 'http://www.genetics.ac.cn/xwzx/kyjz/'
+            num = 3
+
+        with open('./' + judge_name, 'r', encoding = 'utf-8') as f:
+                judge = f.read()
+        index_page(num, judge, judge_name, url_kw)
+
+    print("genetics_ac_spider爬取完毕，脚本退出！")
+    print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
+
+
+if __name__ == '__main__':
+    main()

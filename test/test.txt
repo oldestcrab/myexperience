@@ -1,5 +1,1 @@
-<div class="gzdtbox_ej" width="100%" border="0" cellspacing="0" cellpadding="0">
-
-<span class="floatleft">
-
-//div[@class="gzdtbox_ej"]//span[@class="floatleft"]/a/@href
+INSERT INTO _cs_bmnars_link(url_source,update_time,url_local,source) VALUES ('1','1','1','1') on duplicate key update url_source = '1', update_time = '1', url_local = '1', source = '1';

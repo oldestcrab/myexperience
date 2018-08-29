@@ -148,7 +148,7 @@ def save_mysql(source_url, local_url):
     """
     db = pymysql.connect(host='localhost', user='bmnars', password='vi93nwYV', port=3306, db='bmnars')
     cursor = db.cursor()
-    full_local_url = '/home/bmnars/data/biotech_org_spider/' + local_url + '.html'
+    full_local_url = '/home/bmnars/data/biotech_org_spider_result/' + local_url + '.html'
     update_time = time.strftime('%Y-%m-%d',time.localtime())
     data = {
         'source_url':source_url,
