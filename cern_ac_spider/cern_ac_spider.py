@@ -24,18 +24,14 @@ def index_page(page, judge, judge_name, url_kw):
         if not judge_last_spider:
             break
         print('正在爬取第' + str(i) + '页！\t' + judge_name)
-
-        # 判断url是否需要拼接
-        if i == 1:
-            url = url_kw + 'index.html'
-        else:
-            url = url_kw + 'index_' + str(i-1) + '.html'
+        
+        url = url_kw + str(i)
         headers = {'user-agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36'}
 
         try:
             # 获取索引页
             response_index = requests.get(url, headers = headers)
-            response_index.encoding = 'utf-8'
+            response_index.encoding = 'gb2312'
             # time.sleep(2)
             # print(response_index.url)
         except ConnectionError:
@@ -43,12 +39,12 @@ def index_page(page, judge, judge_name, url_kw):
 
         # 通过xpath获取索引页内的文章列表url
         html_index = etree.HTML(response_index.text)
-        source_index = html_index.xpath('//div[@class="gzdtbox_ej"]//span[@class="floatleft"]/a/@href')
+        source_index = html_index.xpath('//tr//td[@width="97%"]/a/@href')
 
         # 写入当前爬取到的第一个文章url
         if i == 1 and source_index:
             judge_next = source_index[0]
-            with open('whiov_ac_spider/' + judge_name, 'w', encoding = 'utf-8') as f:
+            with open('cern_ac_spider/' + judge_name, 'w', encoding = 'utf-8') as f:
                 print("judge_next:\t" + judge_next)
                 f.write(judge_next)
 
@@ -59,57 +55,50 @@ def index_page(page, judge, judge_name, url_kw):
                 judge_last_spider = False
                 break
 
-            # item: ./201804/t20180428_5004366.html
+            # item: detail.asp?channelid1=110100&id=12399
             # print('item:', item, type(item))
-            get_page(item, url_kw)
+            get_page(item)
         
-def get_page(url, url_kw):
+def get_page(url):
     """
     提取文章内容
     :param url:文章假链接、提供真链接需要的参数
     :param url_kw: 不同分类下的url
     """
-    # url:./201804/t20180428_5004366.html
-    # url_full：http://www.whiov.ac.cn/xwdt_105286/kydt/201804/t20180428_5004366.html
-    url_full = url_kw + url.replace('./','')
-    # print(url_full)
+    # url:detail.asp?channelid1=110100&id=12399
+    # url_full：http://www.cern.ac.cn/2news/detail.asp?channelid1=110100&id=12399
+    url_full = 'http://www.cern.ac.cn/2news/' + url
     headers = {'user-agent':'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)'}
 
     # 获取文章
     response_article = requests.get(url_full, headers = headers)
-    response_article.encoding = 'utf-8'
+    response_article.encoding = 'gb2312'
     time.sleep(1)
 
     # 通过正则表达式获取文章中需要的内容
-    pattren_article = re.compile(r'<div class="xl_content">.*<div class="fenyedisplay-1"', re.S)
+    pattren_article = re.compile(r'<td align="center" class="content_title">.*<table width="100%" align="center">', re.S)
     source_article = pattren_article.search(response_article.text)
 
     if source_article:
         source_article = source_article.group()
-        # url_img.group(1):http://www.whiov.ac.cn/xwdt_105286/kydt/201804
-        pattren_url_img = re.compile(r'(.*?)/t')
-        url_img = pattren_url_img.search(url_full)
-
-        # 获取文章中所有的图片url链接: ./W020131016426608541479.jpg
-        pattern_img = re.compile(r'<img(.*?)\ssrc="(.*?)"', re.S)
+        # 获取文章中所有的图片url链接: ../manage/ewebeditor/uploadfile/201884173636958.jpg
+        pattern_img = re.compile(r'<img(.*?)\ssrc="(.*?)"', re.I)
         findall_img = pattern_img.findall(source_article)
         for kw in findall_img:
-            # kw: ./W020131016426608541479.jpg
-
+            # kw[1]: ../manage/ewebeditor/uploadfile/201884173636958.jpg
             # 判断图片URL是否需要组合
             pattern_judge_img = re.compile(r'http')
             judge_img = pattern_judge_img.search(kw[1])
-            # url_full_img:http://www.whiov.ac.cn/xwdt/kydt/201306/W020131016426608541479.jpg
+            # 图片保存名：name_save_img: 201884173636958.jpg
+            pattern_name_save_img = re.compile(r'.*?(\w+.[jpbg][pmin]\w+)')
+            name_save_img = pattern_name_save_img.search(kw[1]).group(1)
+            # print('name_save_img:', name_save_img, type(name_save_img))
             if judge_img is None:
-                # 图片网址：url_full_img
-                url_full_img =  url_img.group(1) + kw[1].replace('./','/')
-                # 图片保存名：name_save_img: W020131016426608541479.jpg
-                name_save_img = kw[1].replace('./','')
+                # 图片网址：url_full_img: http://www.cern.ac.cn/manage/ewebeditor/uploadfile/201884173636958.jpg
+                url_full_img = 'http://www.cern.ac.cn' + kw[1].replace('..','')
             else:
                 url_full_img = kw[1]
-                pattern_name_save_img = re.compile(r'.*?(\w+.[jpbg][pmin]\w+)')
-                name_save_img = pattern_name_save_img.search(kw[1]).group(1)
-            # print(url_full_img)
+            # print('url_full_img:', url_full_img, type(url_full_img))
             try:
                 # 获取图片
                 response_img = requests.get(url_full_img, headers = headers).content
@@ -122,20 +111,20 @@ def get_page(url, url_kw):
             """
             匹配文章内容中的图片url，替换为本地url
             """
-            # ./W020131016426608541479.jpg
+            # ../manage/ewebeditor/uploadfile/201884173636958.jpg
             pattren_img_local = re.compile(r'.[pjbg][pinm]')
             img_real_name = pattren_img_local.search(match.group())
 
             if img_real_name:
-                img_name  = ' src="./img/' + match.group(1).replace('./','') + '"'
+                img_name  = ' src="./img/' + name_save_img + '"'
                 return img_name
 
         # 匹配文章内容中的图片url，替换为本地图片url
         pattren_img_local = re.compile('\ssrc="(.*?)"')
         source_local = pattren_img_local.sub(url_img_name, source_article)
 
-        # 提取url中的20180428_5004366.html作为文件名保存: ./201804/t20180428_5004366.html
-        pattren_filename = re.compile(r'/t(.*.html)')
+        # 提取url中的12399作为文件名保存: detail.asp?channelid1=110100&id=12399
+        pattren_filename = re.compile(r'id=(.*)')
         filename = pattren_filename.search(url)
 
         # 保存文章内容 
@@ -150,7 +139,7 @@ def save_img(source, filename):
     :param source: 图片文件
     :param filename: 保存的图片名
     """
-    name_save_img = 'whiov_ac_spider/whiov_ac_spider_result/img/' + filename 
+    name_save_img = 'cern_ac_spider/cern_ac_spider_result/img/' + filename 
     try:
         # 保存图片
         with open(name_save_img, 'wb') as f:
@@ -165,7 +154,7 @@ def save_page(source,filename):
     :param filename: 保存的文件名
     """
     try:
-        with open('whiov_ac_spider/whiov_ac_spider_result/' + filename, 'w', encoding = 'utf-8') as f:
+        with open('cern_ac_spider/cern_ac_spider_result/' + filename + '.html', 'w', encoding = 'utf-8') as f:
             f.write(source)
     except  OSError as e:
         print('内容保存失败：' + filename + '\n{e}'.format(e = e))
@@ -174,26 +163,21 @@ def main():
     """
     遍历每一页索引页
     """
-    print("whiov_ac_spider爬取开始！")
+    print("cern_ac_spider爬取开始！")
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
 
-    # 用for循环遍历爬取不同分类下的文章
-    for wd in range(2):
+   
+    judge_name = 'judge_news.txt'
+    url_kw = 'http://www.cern.ac.cn/2news/index.asp?channelid1=110100&page='
+    num = 3
+
     # 读取上次爬取时保存的用于判断爬取位置的字符串
-        if wd == 0:
-            judge_name = 'judge_kydt.txt'
-            url_kw = 'http://www.whiov.ac.cn/xwdt_105286/kydt/'
-            num = 3
-        if wd == 1:
-            judge_name = 'judge_kyjz.txt'
-            url_kw = 'http://www.whiov.ac.cn/kyjz_105338/'
-            num = 2
+    # with open('cern_ac_spider/' + judge_name, 'r', encoding = 'utf-8') as f:
+    #         judge = f.read()
+    judge = 2
+    index_page(num, judge, judge_name, url_kw)
 
-        with open('whiov_ac_spider/' + judge_name, 'r', encoding = 'utf-8') as f:
-                judge = f.read()
-        index_page(num, judge, judge_name, url_kw)
-
-    print("whiov_ac_spider爬取完毕，脚本退出！")
+    print("cern_ac_spider爬取完毕，脚本退出！")
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
 
 

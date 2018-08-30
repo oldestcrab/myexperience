@@ -87,6 +87,7 @@ def get_page(url, url_kw):
 
     if source_article:
         source_article = source_article.group()
+        # 获取图片前半部分网址
         # url_img.group(1):http://www.whiov.ac.cn/xwdt_105286/kydt/201804
         pattren_url_img = re.compile(r'(.*?)/t')
         url_img = pattren_url_img.search(url_full)
@@ -95,14 +96,12 @@ def get_page(url, url_kw):
         pattern_img = re.compile(r'<img(.*?)\ssrc="(.*?)"', re.S)
         findall_img = pattern_img.findall(source_article)
         for kw in findall_img:
-            # kw: ./W020131016426608541479.jpg
-
+            # kw[1]: ./W020131016426608541479.jpg
             # 判断图片URL是否需要组合
             pattern_judge_img = re.compile(r'http')
             judge_img = pattern_judge_img.search(kw[1])
-            # url_full_img:http://www.whiov.ac.cn/xwdt/kydt/201306/W020131016426608541479.jpg
             if judge_img is None:
-                # 图片网址：url_full_img
+                # 图片网址:url_full_img:http://www.whiov.ac.cn/xwdt/kydt/201306/W020131016426608541479.jpg
                 url_full_img =  url_img.group(1) + kw[1].replace('./','/')
                 # 图片保存名：name_save_img: W020131016426608541479.jpg
                 name_save_img = kw[1].replace('./','')
@@ -215,7 +214,6 @@ def main():
 
     # 用for循环遍历爬取不同分类下的文章
     for wd in range(2):
-    # 读取上次爬取时保存的用于判断爬取位置的字符串
         if wd == 0:
             judge_name = 'judge_kydt.txt'
             url_kw = 'http://www.whiov.ac.cn/xwdt_105286/kydt/'
@@ -224,7 +222,7 @@ def main():
             judge_name = 'judge_kyjz.txt'
             url_kw = 'http://www.whiov.ac.cn/kyjz_105338/'
             num = 2
-
+        # 读取上次爬取时保存的用于判断爬取位置的字符串
         with open('./' + judge_name, 'r', encoding = 'utf-8') as f:
                 judge = f.read()
         index_page(num, judge, judge_name, url_kw)
