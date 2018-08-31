@@ -28,20 +28,21 @@ def index_page(page, judge):
 
     # judge_last_spider：用于判断是否爬取到上次爬取位置
     judge_last_spider = True
-    
-    for i in range(1,page):
-        print('开始爬取第' + str(i) + '页！')       
+
+    for i in range(23,page):
+        print('开始爬取第' + str(i) + '页！')    
+  
         if not judge_last_spider:
             break
 
         # 由于在爬取15页索引页之后需要输入验证码，每爬15页暂停5分钟再开始爬取
         judge_times = True
-        if i == 1:
+        if i == 23:
             judge_times = False
-        elif i%15==0:
-            print('=====sleepings=====')
-            time.sleep(120)
-            judge_times = False
+        # elif i%20==0:
+        #    print('=====sleepings=====')
+        #    time.sleep(120)
+        #    judge_times = False
 
         if not judge_times:
             # 先访问search_url与服务器建立一个session会话，保持同一个cookie
@@ -69,7 +70,7 @@ def index_page(page, judge):
             response_index = search_session.get(index_url, params = kw_index, headers = headers)
             response_index.encoding = 'utf-8'
             time.sleep(1)
-            # print(response_index.url)
+            print(response_index.url)
         except ConnectionError:
             print('index_page_ConnectionError:' + index_url)
 
@@ -78,22 +79,29 @@ def index_page(page, judge):
         index_source = index_html.xpath('//a[@class = "fz14"]/@href')
 
         # 写入当前爬取到的第一个文章url
-        if i == 1:
-            next_judge = index_source[0]
-            with open('./judge.txt', 'w', encoding = 'utf-8') as f:
-                print("next_judge:\t" + next_judge)
-                f.write(next_judge)
+        # if i == 1:
+            # next_judge = index_source[0]
+            # with open('cnki_net_spider/judge.txt', 'w', encoding = 'utf-8') as f:
+                # print("next_judge:\t" + next_judge)
+                # f.write(next_judge)
 
         for item in index_source:
             # 判断是否爬取到上次爬取位置,是的话judge_last_spider赋值为False      
-            if item == judge:
-                print("已爬取到上次爬取位置！")
-                judge_last_spider = False
-                break
+            # if item == judge:
+                # print("已爬取到上次爬取位置！")
+                # judge_last_spider = False
+                # break
 
             # item: /kns/detail/detail.aspx?QueryID=0&CurRec=50&recid=&FileName=ZGPX2017062104E&DbName=CAPJLAST&DbCode=CJFQ&yx=Y&pr=&URLID=11.2905.G4.20170621.2131.094
             # print('item:', item, type(item))
-            get_page(item)
+            if item is not None:
+                # print(item)
+                get_page(item)
+            else:
+                print('get noting:\t' + i)
+                judge_times = False
+
+            
         
 
 def get_page(url):
@@ -123,7 +131,7 @@ def get_page(url):
     # 获取文章
     article_response = requests.get(url_article, params = kw, headers = headers)
     article_response.encoding = 'utf-8'
-    # print(article_response.url)
+    print(article_response.url)
     time.sleep(2)
 
     # 通过xpath获取文章中的关键字|有序介孔生物玻璃; 掺杂离子; 生物性能;
@@ -136,19 +144,21 @@ def get_page(url):
             try:
                 kw_real = re.sub('\s|;','',kw.text)
             except TypeError:
-                print('suberror')
+                kw_real = None
             # 保存文章内容 
-            save_page(kw_real)
+            if kw_real:
+                save_page(kw_real)
 
     else:
-        print('get_page_error:\t' + article_response.url)
+        # print('get_page_error:\t' + article_response.url)
+        pass
 
 def save_page(kw):
     """
     保存文章内容
     :param kw:提取出来的关键字
     """
-    with open('./kw_dna.txt', 'a', encoding = 'utf-8') as f:
+    with open('cnki_net_spider/kw_dna.txt', 'a', encoding = 'utf-8') as f:
         f.write(kw + '\n')
 
 def main():
@@ -159,9 +169,9 @@ def main():
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
 
     # 读取上次爬取时保存的用于判断爬取位置的字符串
-    with open('./judge.txt', 'r', encoding = 'utf-8') as f:
-            judge = f.read()
-
+    # with open('./judge.txt', 'r', encoding = 'utf-8') as f:
+            # judge = f.read()
+    judge = 2
     index_page(120, judge)
 
     print("cnki_net_spider爬取完毕，脚本退出！")

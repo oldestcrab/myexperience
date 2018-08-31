@@ -1,1 +1,1 @@
-/kns/detail/detail.aspx?QueryID=0&CurRec=1&recid=&FileName=HGSZ20180814001&DbName=CAPJDAY&DbCode=CJFQ&yx=Y&pr=&URLID=11.1946.TQ.20180816.0842.002
+/kns/detail/detail.aspx?QueryID=0&CurRec=1&recid=&FileName=ZGSP2018082900R&DbName=CAPJDAY&DbCode=CJFQ&yx=Y&pr=&URLID=11.4528.TS.20180829.1651.028
