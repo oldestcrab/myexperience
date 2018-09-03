@@ -1,3 +1,3 @@
-td width="97%"
+<table class="datainfo f14">
 
-//tr//td[@width="97%"]/a/@href
+//table[class="datainfo f14"]

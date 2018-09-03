@@ -46,6 +46,8 @@ def index_page(page, judge):
 
         if not judge_times:
             # 先访问search_url与服务器建立一个session会话，保持同一个cookie
+            print('\n============sleeping300s============\n')
+            time.sleep(300)
             search_session.get(search_url, params = kw_search, headers = headers)
             print('search_get')
 
