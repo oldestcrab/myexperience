@@ -29,7 +29,6 @@ def index_page(page, judge):
     # judge_last_spider：用于判断是否爬取到上次爬取位置
     judge_last_spider = True
     judge_times = True
-
     for i in range(1,page):
         print('开始爬取第' + str(i) + '页！')    
   
@@ -37,6 +36,7 @@ def index_page(page, judge):
             break
 
         # 由于在爬取15页索引页之后需要输入验证码，每爬15页暂停5分钟再开始爬取
+        
         if i == 1:
             judge_times = False
         # elif i%20==0:
@@ -87,7 +87,6 @@ def index_page(page, judge):
                 # f.write(next_judge)
         if index_source:
             # print(i)
-            judge_times = True
             for item in index_source:
                 # 判断是否爬取到上次爬取位置,是的话judge_last_spider赋值为False      
                 # if item == judge:
