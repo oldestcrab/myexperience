@@ -30,14 +30,14 @@ def index_page(page, judge):
     judge_last_spider = True
     judge_times = True
 
-    for i in range(1,page):
+    for i in range(44,page):
         print('开始爬取第' + str(i) + '页！')    
   
         if not judge_last_spider:
             break
 
         # 由于在爬取15页索引页之后需要输入验证码，每爬15页暂停5分钟再开始爬取
-        if i == 1:
+        if i == 44:
             judge_times = False
         # elif i%20==0:
         #    print('=====sleepings=====')
@@ -46,8 +46,9 @@ def index_page(page, judge):
 
         if not judge_times:
             # 先访问search_url与服务器建立一个session会话，保持同一个cookie
-            print('\n============sleeping300s============\n')
-            time.sleep(300)
+            if i != 44:
+                print('\n============sleeping360s============\n')
+                time.sleep(360)
             search_session.get(search_url, params = kw_search, headers = headers)
             print('search_get')
 
@@ -131,9 +132,14 @@ def get_page(url):
     headers = {'user-agent':'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)'}
 
     # 获取文章
-    article_response = requests.get(url_article, params = kw, headers = headers)
+    try:
+        article_response = requests.get(url_article, params = kw, headers = headers)
+    except ConnectionError:
+        print('ConnectionError article_response:' + url_article)
+        print('\n============sleeping60s and try again============\n')
+        article_response = requests.get(url_article, params = kw, headers = headers)
     article_response.encoding = 'utf-8'
-    print(article_response.url)
+    # print(article_response.url)
     time.sleep(2)
 
     # 通过xpath获取文章中的关键字|有序介孔生物玻璃; 掺杂离子; 生物性能;
@@ -160,7 +166,7 @@ def save_page(kw):
     保存文章内容
     :param kw:提取出来的关键字
     """
-    with open('cnki_net_spider/t.txt', 'a', encoding = 'utf-8') as f:
+    with open('cnki_net_spider/test.txt', 'a', encoding = 'utf-8') as f:
         f.write(kw + '\n')
 
 def main():
