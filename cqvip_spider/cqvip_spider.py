@@ -23,7 +23,7 @@ def index_page(page):
     headers = {'user-agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36'}
     # kw_search为search_url的参数，kw_index为index_url的参数，注意：修改kw_search中txt_1_value1的值才会真正返回修改后的搜索结果，kw_index中的keyValue修改与否没有影响。
     # 例如：'txt_1_value1':'生物'，'keyValue':'化学'  ，真正的搜素结果为生物
-    for i in range(70,page):
+    for i in range(1,page):
         print('开始爬取第' + str(i) + '页！')    
         if i%50 == 0:
             print('\n============sleeping300s============\n')

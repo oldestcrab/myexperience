@@ -5,6 +5,7 @@ import time
 import requests
 from lxml import etree
 from requests import ConnectionError
+import random
 
 
 def index_page(page, judge):
@@ -19,7 +20,7 @@ def index_page(page, judge):
     search_url = r'http://kns.cnki.net/kns/request/SearchHandler.ashx?action=&NaviCode=*&ua=1.11&PageName=ASP.brief_default_result_aspx&DbPrefix=SCDB&DbCatalog=%E4%B8%AD%E5%9B%BD%E5%AD%A6%E6%9C%AF%E6%96%87%E7%8C%AE%E7%BD%91%E7%BB%9C%E5%87%BA%E7%89%88%E6%80%BB%E5%BA%93&ConfigFile=SCDBINDEX.xml&db_opt=CJFQ%2CCDFD%2CCMFD%2CCPFD%2CIPFD%2CCCND%2CCCJD&txt_1_sel=SU%24%25%3D|&txt_1_special1=%25&his=0&parentdb=SCDB&__=Thu%20Aug%2009%202018%2015%3A36%3A52%20GMT%2B0800%20(%E4%B8%AD%E5%9B%BD%E6%A0%87%E5%87%86%E6%97%B6%E9%97%B4)'
     # 索引页url
     index_url = 'http://kns.cnki.net/kns/brief/brief.aspx'
-    headers = {'user-agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36'}
+    # headers = {'user-agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36'}
     # kw_search为search_url的参数，kw_index为index_url的参数，注意：修改kw_search中txt_1_value1的值才会真正返回修改后的搜索结果，kw_index中的keyValue修改与否没有影响。
     # 例如：'txt_1_value1':'生物'，'keyValue':'化学'  ，真正的搜素结果为生物
     kw_search = {
@@ -29,15 +30,18 @@ def index_page(page, judge):
     # judge_last_spider：用于判断是否爬取到上次爬取位置
     judge_last_spider = True
     judge_times = True
-
-    for i in range(44,page):
+    if judge:
+        page_start = int(judge)
+    else:
+        page_start = 1
+    for i in range(page_start,page):
         print('开始爬取第' + str(i) + '页！')    
   
         if not judge_last_spider:
             break
 
         # 由于在爬取15页索引页之后需要输入验证码，每爬15页暂停5分钟再开始爬取
-        if i == 44:
+        if i == page_start:
             judge_times = False
         # elif i%20==0:
         #    print('=====sleepings=====')
@@ -46,11 +50,15 @@ def index_page(page, judge):
 
         if not judge_times:
             # 先访问search_url与服务器建立一个session会话，保持同一个cookie
-            if i != 44:
+            if i != page_start:
                 print('\n============sleeping360s============\n')
                 time.sleep(360)
+            with open('test/user-agents.txt', 'r', encoding = 'utf-8') as f:
+                list_user_agents = f.readlines()
+                user_agent = random.choice(list_user_agents).strip()
+            headers = {'user-agent':user_agent}
             search_session.get(search_url, params = kw_search, headers = headers)
-            print('search_get')
+            print('search_session_get')
 
         # curpage 当前页
         curpage =  i
@@ -104,7 +112,11 @@ def index_page(page, judge):
         else:
             print('url get noting:\t' + str(i))
             judge_times = False
-            print(judge_times)
+            # judge_last_spider = False
+            # print(judge_times)
+            with open('cnki_net_spider/judge_page.txt', 'w', encoding = 'utf-8') as f:
+                print("next_page:\t" + str(i))
+                f.write(str(i))
         
 
 def get_page(url):
@@ -129,8 +141,11 @@ def get_page(url):
         'DbCode':url_dbcode
     }
     url_article = 'http://kns.cnki.net/KCMS/detail/detail.aspx?'
-    headers = {'user-agent':'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)'}
-
+    # headers = {'user-agent':'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)'}
+    with open('test/user-agents.txt', 'r', encoding = 'utf-8') as f:
+        list_user_agents = f.readlines()
+        user_agent = random.choice(list_user_agents).strip()
+    headers = {'user-agent':user_agent}
     # 获取文章
     try:
         article_response = requests.get(url_article, params = kw, headers = headers)
@@ -177,9 +192,9 @@ def main():
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
 
     # 读取上次爬取时保存的用于判断爬取位置的字符串
-    # with open('./judge.txt', 'r', encoding = 'utf-8') as f:
-            # judge = f.read()
-    judge = 2
+    with open('cnki_net_spider/judge_page.txt', 'r', encoding = 'utf-8') as f:
+            judge = f.read()
+    # judge = 2
     index_page(120, judge)
 
     print("cnki_net_spider爬取完毕，脚本退出！")
