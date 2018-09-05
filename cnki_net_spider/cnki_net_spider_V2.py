@@ -12,7 +12,7 @@ def index_page(page, judge):
     """
     爬取索引页
     :param page:页码
-    :param judge: 用于判断上次爬取位置
+    :param judge: 用于判断上次爬取页数
     """
     # 通过用session保持链接
     search_session = requests.Session()
@@ -24,23 +24,29 @@ def index_page(page, judge):
     # kw_search为search_url的参数，kw_index为index_url的参数，注意：修改kw_search中txt_1_value1的值才会真正返回修改后的搜索结果，kw_index中的keyValue修改与否没有影响。
     # 例如：'txt_1_value1':'生物'，'keyValue':'化学'  ，真正的搜素结果为生物
     kw_search = {
-        'txt_1_value1':'dna',
+        'txt_1_value1':'基因',
     }
 
     # judge_last_spider：用于判断是否爬取到上次爬取位置
     judge_last_spider = True
+    # judge_times： 判断是否需要使用session保持链接
     judge_times = True
+    # 当judge_none为1时存入当前页数，也就是第一次访问不到资源的页数
+    judge_none = 0
+    # 如果judge_page.txt里面不为空，则把读取的数字化为整形，不然开始页数为1
     if judge:
         page_start = int(judge)
     else:
         page_start = 1
+
     for i in range(page_start,page):
         print('开始爬取第' + str(i) + '页！')    
-  
-        if not judge_last_spider:
+        # 如果judge_last_spider为假，则退出整个循环，爬取结束
+        if judge_none > 5:
             break
 
-        # 由于在爬取15页索引页之后需要输入验证码，每爬15页暂停5分钟再开始爬取
+        # 在爬取15页索引页之后需要输入验证码，每爬15页暂停5分钟再开始爬取
+        # 一开始爬取需要使用session保持链接
         if i == page_start:
             judge_times = False
         # elif i%20==0:
@@ -48,17 +54,27 @@ def index_page(page, judge):
         #    time.sleep(120)
         #    judge_times = False
 
+        # 如果judge_times为假，则建立一个session会话
         if not judge_times:
             # 先访问search_url与服务器建立一个session会话，保持同一个cookie
+
+            # 若非开始爬取页数，则是获取不到资源，等待6分钟之后再尝试建立一个session会话
             if i != page_start:
                 print('\n============sleeping360s============\n')
                 time.sleep(360)
+            
+            # 随机选择一个user-agent
             with open('test/user-agents.txt', 'r', encoding = 'utf-8') as f:
                 list_user_agents = f.readlines()
                 user_agent = random.choice(list_user_agents).strip()
             headers = {'user-agent':user_agent}
+            print(headers)
+
+            # 建立一个session会话
             search_session.get(search_url, params = kw_search, headers = headers)
             print('search_session_get')
+
+
 
         # curpage 当前页
         curpage =  i
@@ -80,11 +96,14 @@ def index_page(page, judge):
         try:
             # 获取索引页
             response_index = search_session.get(index_url, params = kw_index, headers = headers)
-            response_index.encoding = 'utf-8'
-            time.sleep(1)
-            print(response_index.url)
         except ConnectionError:
-            print('index_page_ConnectionError:' + index_url)
+            print('index_page_ConnectionError，sleeping 10s and try again!:' + index_url)
+            # 30S后尝试再访问一次
+            time.sleep(10)
+            response_index = search_session.get(index_url, params = kw_index, headers = headers)
+        response_index.encoding = 'utf-8'
+        time.sleep(1)
+        print(response_index.url)
 
         # 通过xpath获取索引页内的文章列表url
         index_html = etree.HTML(response_index.text)
@@ -96,11 +115,12 @@ def index_page(page, judge):
             # with open('cnki_net_spider/judge.txt', 'w', encoding = 'utf-8') as f:
                 # print("next_judge:\t" + next_judge)
                 # f.write(next_judge)
+
+        # 先判断是否能获取文章列表url
         if index_source:
-            # print(i)
+            # 如果能获取文章列表url，则可以尝试爬取下一页，不用再次建立一个session会话
             judge_times = True
-            for item in index_source:
-                # 判断是否爬取到上次爬取位置,是的话judge_last_spider赋值为False      
+            for item in index_source:  
                 # if item == judge:
                     # print("已爬取到上次爬取位置！")
                     # judge_last_spider = False
@@ -110,13 +130,19 @@ def index_page(page, judge):
                 # print('item:', item, type(item))
                 get_page(item)
         else:
+            # 如果不能获取文章列表url，则judge_none + 1，同时judge_times为False，重新建立一个session会话
             print('url get noting:\t' + str(i))
+            judge_none += 1
+            print(judge_none)
             judge_times = False
             # judge_last_spider = False
             # print(judge_times)
-            with open('cnki_net_spider/judge_page.txt', 'w', encoding = 'utf-8') as f:
-                print("next_page:\t" + str(i))
-                f.write(str(i))
+
+            # 当judge_none为1时存入当前页数，即第一次获取不到资源，下次从这里开始爬取！
+            if judge_none == 1:
+                with open('cnki_net_spider/judge_page.txt', 'w', encoding = 'utf-8') as f:
+                    print("next_page:\t" + str(i))
+                    f.write(str(i))
         
 
 def get_page(url):
@@ -141,7 +167,7 @@ def get_page(url):
         'DbCode':url_dbcode
     }
     url_article = 'http://kns.cnki.net/KCMS/detail/detail.aspx?'
-    # headers = {'user-agent':'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)'}
+    # 随机选择一个user-agent    
     with open('test/user-agents.txt', 'r', encoding = 'utf-8') as f:
         list_user_agents = f.readlines()
         user_agent = random.choice(list_user_agents).strip()
@@ -150,9 +176,9 @@ def get_page(url):
     try:
         article_response = requests.get(url_article, params = kw, headers = headers)
     except ConnectionError:
-        print('ConnectionError article_response:' + url_article)
-        print('\n============sleeping60s and try again============\n')
-        article_response = requests.get(url_article, params = kw, headers = headers)
+        # 如果链接错误，则放弃爬取此文章页面，获取百度页面，xpath匹配不到，不写入。脚本继续爬取，避免因此中断
+        print('ConnectionError article_response，get baidu!')
+        article_response = requests.get('https://www.baidu.com')
     article_response.encoding = 'utf-8'
     # print(article_response.url)
     time.sleep(2)
@@ -165,6 +191,7 @@ def get_page(url):
     if kw_article:
         for kw in kw_article:
             try:
+                # 替换关键字中的无关字符
                 kw_real = re.sub('\s|;','',kw.text)
             except TypeError:
                 kw_real = None
@@ -181,7 +208,7 @@ def save_page(kw):
     保存文章内容
     :param kw:提取出来的关键字
     """
-    with open('cnki_net_spider/test.txt', 'a', encoding = 'utf-8') as f:
+    with open('cnki_net_spider/kw_jiyin.txt', 'a', encoding = 'utf-8') as f:
         f.write(kw + '\n')
 
 def main():
@@ -191,10 +218,9 @@ def main():
     print("cnki_net_spider爬取开始！")
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
 
-    # 读取上次爬取时保存的用于判断爬取位置的字符串
+    # 读取上次爬取时最后的爬取页数，此次爬取从此页数开始
     with open('cnki_net_spider/judge_page.txt', 'r', encoding = 'utf-8') as f:
             judge = f.read()
-    # judge = 2
     index_page(120, judge)
 
     print("cnki_net_spider爬取完毕，脚本退出！")
