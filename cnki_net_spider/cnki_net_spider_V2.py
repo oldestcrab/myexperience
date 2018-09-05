@@ -42,7 +42,7 @@ def index_page(page, judge):
     for i in range(page_start,page):
         print('开始爬取第' + str(i) + '页！')    
         # 如果judge_last_spider为假，则退出整个循环，爬取结束
-        if judge_none > 5:
+        if judge_none > 4:
             break
 
         # 在爬取15页索引页之后需要输入验证码，每爬15页暂停5分钟再开始爬取
@@ -58,13 +58,13 @@ def index_page(page, judge):
         if not judge_times:
             # 先访问search_url与服务器建立一个session会话，保持同一个cookie
 
-            # 若非开始爬取页数，则是获取不到资源，等待6分钟之后再尝试建立一个session会话
+            # 若非开始爬取页数，则是获取不到资源，等待3分钟之后再尝试建立一个session会话
             if i != page_start:
-                print('\n============sleeping360s============\n')
-                time.sleep(360)
+                print('\n============sleeping 180s============\n')
+                time.sleep(180)
             
             # 随机选择一个user-agent
-            with open('test/user-agents.txt', 'r', encoding = 'utf-8') as f:
+            with open('./user-agents.txt', 'r', encoding = 'utf-8') as f:
                 list_user_agents = f.readlines()
                 user_agent = random.choice(list_user_agents).strip()
             headers = {'user-agent':user_agent}
@@ -140,7 +140,7 @@ def index_page(page, judge):
 
             # 当judge_none为1时存入当前页数，即第一次获取不到资源，下次从这里开始爬取！
             if judge_none == 1:
-                with open('cnki_net_spider/judge_page.txt', 'w', encoding = 'utf-8') as f:
+                with open('./judge_page.txt', 'w', encoding = 'utf-8') as f:
                     print("next_page:\t" + str(i))
                     f.write(str(i))
         
@@ -168,7 +168,7 @@ def get_page(url):
     }
     url_article = 'http://kns.cnki.net/KCMS/detail/detail.aspx?'
     # 随机选择一个user-agent    
-    with open('test/user-agents.txt', 'r', encoding = 'utf-8') as f:
+    with open('./user-agents.txt', 'r', encoding = 'utf-8') as f:
         list_user_agents = f.readlines()
         user_agent = random.choice(list_user_agents).strip()
     headers = {'user-agent':user_agent}
@@ -208,7 +208,7 @@ def save_page(kw):
     保存文章内容
     :param kw:提取出来的关键字
     """
-    with open('cnki_net_spider/kw_jiyin.txt', 'a', encoding = 'utf-8') as f:
+    with open('./kw_jiyin.txt', 'a', encoding = 'utf-8') as f:
         f.write(kw + '\n')
 
 def main():
@@ -219,7 +219,7 @@ def main():
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
 
     # 读取上次爬取时最后的爬取页数，此次爬取从此页数开始
-    with open('cnki_net_spider/judge_page.txt', 'r', encoding = 'utf-8') as f:
+    with open('./judge_page.txt', 'r', encoding = 'utf-8') as f:
             judge = f.read()
     index_page(120, judge)
 
