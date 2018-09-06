@@ -32,18 +32,18 @@ def index_page(page, judge_page):
         print('开始爬取第' + str(i) + '页！')    
         if i ==page_start or i%5 == 0:
             if i != page_start:
-                print('\n============sleeping60s============\n')
-                time.sleep(60)
+                print('\n============sleeping600s============\n')
+                time.sleep(600)
             with open('./user-agents.txt', 'r', encoding = 'utf-8') as f:
                 list_user_agents = f.readlines()
                 user_agent = random.choice(list_user_agents).strip()
             headers = {'user-agent':user_agent}
             print(headers)
         # elif i%10 == 0:
-        #     print('\n============sleeping60s============\n')
-        #     time.sleep(60)
+            # print('\n============sleeping60s============\n')
+            # time.sleep(60)
         kw_index = {
-            'k':'生物',
+            'k':'dna',
             'curpage':i
         }
         try:
@@ -51,7 +51,7 @@ def index_page(page, judge_page):
             response_index = requests.get(url_index, params = kw_index, headers = headers)
         except ConnectionError:
             print('index_page_ConnectionError and try again!:' + url_index)
-            with open('./judge_page.txt', 'w', encoding = 'utf-8') as f:
+            with open('./judge_page_dna.txt', 'w', encoding = 'utf-8') as f:
                 print("next_page:\t" + str(i))
                 f.write(str(i))
             response_index = requests.get(url_index, params = kw_index, headers = headers)
@@ -135,7 +135,7 @@ def save_page(kw):
     :param kw:提取出来的关键字
     """
     if kw:
-        with open('./kw_shengwu.txt', 'a', encoding = 'utf-8') as f:
+        with open('./kw_dna.txt', 'a', encoding = 'utf-8') as f:
             f.write(str(kw) + '\n')
 
 def main():
@@ -146,7 +146,7 @@ def main():
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
 
     # 读取上次爬取时保存的用于判断爬取位置的字符串
-    with open('./judge_page.txt', 'r', encoding = 'utf-8') as f:
+    with open('./judge_page_dna.txt', 'r', encoding = 'utf-8') as f:
             judge_page = f.read()
     # judge = 2
     index_page(200, judge_page)
