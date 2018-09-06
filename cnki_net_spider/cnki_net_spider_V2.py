@@ -24,7 +24,7 @@ def index_page(page, judge):
     # kw_search为search_url的参数，kw_index为index_url的参数，注意：修改kw_search中txt_1_value1的值才会真正返回修改后的搜索结果，kw_index中的keyValue修改与否没有影响。
     # 例如：'txt_1_value1':'生物'，'keyValue':'化学'  ，真正的搜素结果为生物
     kw_search = {
-        'txt_1_value1':'蛋白',
+        'txt_1_value1':'细胞',
     }
 
     # judge_last_spider：用于判断是否爬取到上次爬取位置
@@ -55,7 +55,7 @@ def index_page(page, judge):
         #    judge_times = False
 
         # 如果judge_times为假，则建立一个session会话
-        if not judge_times:
+        if not judge_times or i%5==0:
             # 先访问search_url与服务器建立一个session会话，保持同一个cookie
 
             # 若非开始爬取页数，则是获取不到资源，等待3分钟之后再尝试建立一个session会话
@@ -208,7 +208,7 @@ def save_page(kw):
     保存文章内容
     :param kw:提取出来的关键字
     """
-    with open('cnki_net_spider/kw_danbai.txt', 'a', encoding = 'utf-8') as f:
+    with open('cnki_net_spider/kw_xibao.txt', 'a', encoding = 'utf-8') as f:
         f.write(kw + '\n')
 
 def main():

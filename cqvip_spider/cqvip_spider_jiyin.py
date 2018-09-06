@@ -32,8 +32,8 @@ def index_page(page, judge_page):
         print('开始爬取第' + str(i) + '页！')    
         if i ==page_start or i%5 == 0:
             if i != page_start:
-                print('\n============sleeping600s============\n')
-                time.sleep(600)
+                print('\n============sleeping300s============\n')
+                time.sleep(300)
             with open('./user-agents.txt', 'r', encoding = 'utf-8') as f:
                 list_user_agents = f.readlines()
                 user_agent = random.choice(list_user_agents).strip()
