@@ -8,3 +8,6 @@
 2. `whiov_ac_spider_result`——爬取到的文章保存位置
 3. `whiov_ac_spider_result/img`——爬取的文章图片保存位置
 4. `judge_*.txt`——保存判断值，用于判断上次爬取位置
+
+
+
