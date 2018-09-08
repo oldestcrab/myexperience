@@ -6,6 +6,7 @@ import requests
 from lxml import etree
 from requests import ConnectionError
 import random
+import sys
 
 
 def index_page(page, judge_page):
@@ -34,7 +35,7 @@ def index_page(page, judge_page):
             if i != page_start:
                 print('\n============sleeping60s============\n')
                 time.sleep(60)
-            with open('./user-agents.txt', 'r', encoding = 'utf-8') as f:
+            with open(sys.path[0] + '/user-agents.txt', 'r', encoding = 'utf-8') as f:
                 list_user_agents = f.readlines()
                 user_agent = random.choice(list_user_agents).strip()
             headers = {'user-agent':user_agent}
@@ -51,7 +52,7 @@ def index_page(page, judge_page):
             response_index = requests.get(url_index, params = kw_index, headers = headers)
         except ConnectionError:
             print('index_page_ConnectionError and try again!:' + url_index)
-            with open('./judge_page.txt', 'w', encoding = 'utf-8') as f:
+            with open(sys.path[0] + '/judge_page.txt', 'w', encoding = 'utf-8') as f:
                 print("next_page:\t" + str(i))
                 f.write(str(i))
             response_index = requests.get(url_index, params = kw_index, headers = headers)
@@ -65,7 +66,7 @@ def index_page(page, judge_page):
         # 写入当前爬取到的第一个文章url
         # if i == 1:
             # next_judge = index_source[0]
-            # with open('./judge.txt', 'w', encoding = 'utf-8') as f:
+            # with open(sys.path[0] + '/judge.txt', 'w', encoding = 'utf-8') as f:
                 # print("next_judge:\t" + next_judge)
                 # f.write(next_judge)
         if source_index:
@@ -100,7 +101,7 @@ def get_page(url):
     url_article = 'http://cqvip.com' + url.replace(r'\"','')
     # print(url_article)
     # headers = {'user-agent':'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)'}
-    with open('./user-agents.txt', 'r', encoding = 'utf-8') as f:
+    with open(sys.path[0] + '/user-agents.txt', 'r', encoding = 'utf-8') as f:
         list_user_agents = f.readlines()
         user_agent = random.choice(list_user_agents).strip()
     headers = {'user-agent':user_agent}
@@ -135,7 +136,7 @@ def save_page(kw):
     :param kw:提取出来的关键字
     """
     if kw:
-        with open('./kw_shengwu.txt', 'a', encoding = 'utf-8') as f:
+        with open(sys.path[0] + '/kw_shengwu.txt', 'a', encoding = 'utf-8') as f:
             f.write(str(kw) + '\n')
 
 def main():
@@ -146,7 +147,7 @@ def main():
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
 
     # 读取上次爬取时保存的用于判断爬取位置的字符串
-    with open('./judge_page.txt', 'r', encoding = 'utf-8') as f:
+    with open(sys.path[0] + '/judge_page.txt', 'r', encoding = 'utf-8') as f:
             judge_page = f.read()
     # judge = 2
     index_page(200, judge_page)

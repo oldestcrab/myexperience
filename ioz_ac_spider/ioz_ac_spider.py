@@ -2,7 +2,7 @@
 
 import re
 import time
-
+import sys
 import requests
 from lxml import etree
 from requests import ConnectionError
@@ -36,7 +36,7 @@ def index_page(page, judge):
     # 写入当前爬取到的第一个文章url
     if page == 0:
         next_judge = index_source[0].xpath('@href')[0].replace('./','/',)
-        with open('./ioz_ac_spider/judge.txt', 'w', encoding = 'utf-8') as f:
+        with open(sys.path[0] + '/judge.txt', 'w', encoding = 'utf-8') as f:
             print("next_judge:\t" + next_judge)
             f.write(next_judge)
 
@@ -125,7 +125,7 @@ def save_img(result, filename):
     :param result: 图片文件
     :param filename: 保存的图片名
     """
-    img_save_full_name = './ioz_ac_spider/ioz_ac_spider_result/img/' + filename 
+    img_save_full_name = sys.path[0] + '/ioz_ac_spider_result/img/' + filename 
     with open(img_save_full_name, 'wb') as f:
         f.write(result)  
         
@@ -134,7 +134,7 @@ def save_page(html,filename):
     保存到文件
     :param html: 结果
     """
-    with open('./ioz_ac_spider/ioz_ac_spider_result/' + filename + '.html', 'w', encoding = 'utf-8') as f:
+    with open(sys.path[0] + '/ioz_ac_spider_result/' + filename + '.html', 'w', encoding = 'utf-8') as f:
         f.write(html)
 
 def main():
@@ -142,7 +142,7 @@ def main():
     遍历每一页索引页
     """
     # 读取上次爬取时保存的用于判断爬取位置的字符串
-    with open('./ioz_ac_spider/judge.txt', 'r', encoding = 'utf-8') as f:
+    with open(sys.path[0] + '/judge.txt', 'r', encoding = 'utf-8') as f:
             judge = f.read()
 
     for i in range(9):

@@ -5,6 +5,7 @@ import time
 import requests
 from lxml import etree
 from requests import ConnectionError
+import sys
 
 
 def index_page(page, judge):
@@ -37,7 +38,7 @@ def index_page(page, judge):
         next_judge = index_source[0].xpath('@href')[0].replace('./','/',)
         # print('next_judge', next_judge, type(next_judge))
         
-        with open('./kepu_net_spider/judge.txt', 'w', encoding = 'utf-8') as f:
+        with open(sys.path[0] + '/judge.txt', 'w', encoding = 'utf-8') as f:
             print("next_judge:\t" + next_judge)
             f.write(next_judge)
 
@@ -141,7 +142,7 @@ def save_img(result, filename):
     :param result: 图片文件
     :param filename: 保存的图片名
     """
-    img_save_full_name = './kepu_net_spider/kepu_net_spider_result/img/' + filename 
+    img_save_full_name = sys.path[0] + '/kepu_net_spider_result/img/' + filename 
     with open(img_save_full_name, 'wb') as f:
         f.write(result)  
         
@@ -150,7 +151,7 @@ def save_page(html,filename):
     保存到文件
     :param html: 结果
     """
-    with open('./kepu_net_spider/kepu_net_spider_result/' + filename, 'w', encoding = 'utf-8') as f:
+    with open(sys.path[0] + '/kepu_net_spider_result/' + filename, 'w', encoding = 'utf-8') as f:
         f.write(html)
 
 def main():
@@ -158,7 +159,7 @@ def main():
     遍历每一页索引页
     """
     # 读取上次爬取时保存的用于判断爬取位置的字符串
-    with open('./kepu_net_spider/judge.txt', 'r', encoding = 'utf-8') as f:
+    with open(sys.path[0] + '/judge.txt', 'r', encoding = 'utf-8') as f:
             judge = f.read()
     # judge = 2
 

@@ -1,3 +1,3 @@
-name_kw_search = '分子机理'
+name_kw_search = '蛋白质功能'
 
-name_save = 'kw_分子机理'
+name_save = 'kw_蛋白质功能'

@@ -5,6 +5,7 @@ import time
 import requests
 from lxml import etree
 from requests import ConnectionError
+import sys
 
 
 def index_page(page, judge, judge_name, url_kw):
@@ -44,7 +45,7 @@ def index_page(page, judge, judge_name, url_kw):
         # 写入当前爬取到的第一个文章url
         if i == 1 and source_index:
             judge_next = source_index[0]
-            with open('cern_ac_spider/' + judge_name, 'w', encoding = 'utf-8') as f:
+            with open(sys.path[0] + '/' + judge_name, 'w', encoding = 'utf-8') as f:
                 print("judge_next:\t" + judge_next)
                 f.write(judge_next)
 
@@ -139,7 +140,7 @@ def save_img(source, filename):
     :param source: 图片文件
     :param filename: 保存的图片名
     """
-    name_save_img = 'cern_ac_spider/cern_ac_spider_result/img/' + filename 
+    name_save_img = sys.path[0] + '/cern_ac_spider_result/img/' + filename 
     try:
         # 保存图片
         with open(name_save_img, 'wb') as f:
@@ -154,7 +155,7 @@ def save_page(source,filename):
     :param filename: 保存的文件名
     """
     try:
-        with open('cern_ac_spider/cern_ac_spider_result/' + filename + '.html', 'w', encoding = 'utf-8') as f:
+        with open(sys.path[0] + '/cern_ac_spider_result/' + filename + '.html', 'w', encoding = 'utf-8') as f:
             f.write(source)
     except  OSError as e:
         print('内容保存失败：' + filename + '\n{e}'.format(e = e))

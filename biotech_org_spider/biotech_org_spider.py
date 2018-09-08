@@ -5,6 +5,7 @@ import time
 import requests
 from lxml import etree
 from requests import ConnectionError
+import sys
 
 
 def index_page(page, judge, judge_name, url):
@@ -35,7 +36,7 @@ def index_page(page, judge, judge_name, url):
     if page == 1:
         next_judge = index_source[0]
         
-        with open('./biotech_org_spider/' + judge_name, 'w', encoding = 'utf-8') as f:
+        with open(sys.path[0] + '/' + judge_name, 'w', encoding = 'utf-8') as f:
             print(judge_name + "\t<————next_judge————>\t" + next_judge)
             f.write(next_judge)
 
@@ -107,7 +108,7 @@ def get_page(url):
             if img_real_name is not None:
                 img_sub_pattern = re.compile('.*=(\w+.*?\.\w+)')
                 img_sub_name = img_sub_pattern.search(match.group())
-                img_name  = ' src="./img/' + img_sub_name.group(1) + '"'
+                img_name  = ' src="' + './img/' + img_sub_name.group(1) + '"'
 
                 return img_name
 
@@ -127,7 +128,7 @@ def save_img(result, filename):
     :param result: 图片文件
     :param filename: 保存的图片名
     """
-    img_save_full_name = './biotech_org_spider/biotech_org_spider_result/img/' + filename 
+    img_save_full_name = sys.path[0] + '/biotech_org_spider_result/img/' + filename 
     with open(img_save_full_name, 'wb') as f:
         f.write(result)  
         
@@ -136,7 +137,7 @@ def save_page(html,filename):
     保存到文件
     :param html: 结果
     """
-    with open('./biotech_org_spider/biotech_org_spider_result/' + filename + '.html', 'w', encoding = 'utf-8') as f:
+    with open(sys.path[0] + '/biotech_org_spider_result/' + filename + '.html', 'w', encoding = 'utf-8') as f:
         f.write(html)
 
 def main():
@@ -173,7 +174,7 @@ def main():
             url = 'http://www.biotech.org.cn/topic/110/page/'
     
         # 读取上次爬取时保存的用于判断爬取位置的字符串
-        with open('./biotech_org_spider/' + judge_name, 'r', encoding = 'utf-8') as f:
+        with open(sys.path[0] + '/' + judge_name, 'r', encoding = 'utf-8') as f:
                 judge = f.read()
 
         for i in range(1,2):

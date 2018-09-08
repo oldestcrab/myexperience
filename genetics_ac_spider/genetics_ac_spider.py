@@ -5,7 +5,7 @@ import time
 import requests
 from lxml import etree
 from requests import ConnectionError
-
+import sys
 
 def index_page(page, judge, judge_name, url_kw):
     """
@@ -48,7 +48,7 @@ def index_page(page, judge, judge_name, url_kw):
         # 写入当前爬取到的第一个文章url
         if i == 1:
             judge_next = source_index[0]
-            with open('genetics_ac_spider/' + judge_name, 'w', encoding = 'utf-8') as f:
+            with open(sys.path[0] + '/' + judge_name, 'w', encoding = 'utf-8') as f:
                 print("judge_next:\t" + judge_next)
                 f.write(judge_next)
 
@@ -147,7 +147,7 @@ def save_img(source, filename):
     :param source: 图片文件
     :param filename: 保存的图片名
     """
-    name_save_img = 'genetics_ac_spider/genetics_ac_spider_result/img/' + filename 
+    name_save_img = sys.path[0] + '/genetics_ac_spider_result/img/' + filename 
     with open(name_save_img, 'wb') as f:
         f.write(source)  
         
@@ -157,7 +157,7 @@ def save_page(source,filename):
     :param source: 结果
     :param filename: 保存的文件名
     """
-    with open('genetics_ac_spider/genetics_ac_spider_result/' + filename, 'w', encoding = 'utf-8') as f:
+    with open(sys.path[0] + '/genetics_ac_spider_result/' + filename, 'w', encoding = 'utf-8') as f:
         f.write(source)
 
 def main():
@@ -179,7 +179,7 @@ def main():
             url_kw = 'http://www.genetics.ac.cn/xwzx/kyjz/'
             num = 3
 
-        with open('genetics_ac_spider/' + judge_name, 'r', encoding = 'utf-8') as f:
+        with open(sys.path[0] + '/' + judge_name, 'r', encoding = 'utf-8') as f:
                 judge = f.read()
         index_page(num, judge, judge_name, url_kw)
 

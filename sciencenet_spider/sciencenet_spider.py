@@ -11,7 +11,7 @@ import time
 import requests
 from requests.exceptions import ConnectionError
 import re
-#import os
+import sys
 
 # 构造一个 WebDriver 对象，调用phantomjs
 browser = webdriver.PhantomJS(executable_path=r'C:/Users/CRAB/Desktop/mybooks/execute/phantomjs-2.1.1-windows/bin/phantomjs.exe')
@@ -187,7 +187,7 @@ def save_page(result, filename):
     :param result: 结果
     :param filename: 保存的文件名
     """
-    full_filename = './sciencenet_spider/sciencenet_spider_result/' + filename + '.html'
+    full_filename = sys.path[0] + '/sciencenet_spider_result/' + filename + '.html'
     with open(full_filename, 'w', encoding = 'utf-8') as f:
         f.write(result)
     #print('文件' + full_filename + '保存成功')    
@@ -198,7 +198,7 @@ def save_img(result, filename):
     :param result: 图片文件
     :param filename: 保存的图片名
     """
-    img_save_full_name = './sciencenet_spider/sciencenet_spider_result/img/' + filename + '.jpg'
+    img_save_full_name = sys.path[0] + '/sciencenet_spider_result/img/' + filename + '.jpg'
     with open(img_save_full_name, 'wb') as f:
         f.write(result)       
 
@@ -218,12 +218,12 @@ def main():
             # 论文为总页数为259
             num = 259
             # 领域新闻的判断文件名
-            judge_name = 'sciencenet_spider/paper_url_judge.txt'
+            judge_name = sys.path[0] + '/paper_url_judge.txt'
         if wd == 1:
             url = 'http://news.sciencenet.cn/fieldlist.aspx?id=3'
             judge_width = '@width = "60%"'
             num = 614
-            judge_name = 'sciencenet_spider/news_url_judge.txt'
+            judge_name = sys.path[0] + '/news_url_judge.txt'
 
         # 读取上次爬取时保存的用于判断爬取位置的字符串
         with open(judge_name, 'r', encoding = 'utf-8') as f:
