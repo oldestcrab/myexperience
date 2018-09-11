@@ -1,3 +1,2 @@
-<table class="datainfo f14">
-
-//table[class="datainfo f14"]
+<ul class="news-list">
+//ul[@class="news-list"]//a
