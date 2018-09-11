@@ -11,3 +11,9 @@
 5. `user-agent.txt`——user-agent列表
 
 
+http://www.bioon.com/
+先只爬这个，版权问题
+http://www.bioon.com/load_more.do?p=6
+ajax加载|异步刷新
+变得只有P参数，最简单的那种
+页数也是对的

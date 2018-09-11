@@ -7,8 +7,8 @@
 1. `cnki_net_spider_mysql.py`——爬取脚本（在linux运行，并保存数据到mysql数据库）
 2. `cnki_net_spider_result`——爬取到的文章保存位置
 3. `cnki_net_spider_result/img`——爬取的文章图片保存位置
-4. `judge_page*.txt`——保存页数判断值，用于判断上次爬取页数
-5. `kw*.txt`——爬取的关键词
+4. `judge_*.txt`——保存页数判断值，用于判断上次爬取页数
+5. `kw_*.txt`——爬取的关键词
 6. `config.py`——配置文件
 7. `user-agent.txt`——user-agent列表
 
