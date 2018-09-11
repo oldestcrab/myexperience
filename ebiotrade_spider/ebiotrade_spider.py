@@ -7,6 +7,7 @@ from lxml import etree
 from requests import ConnectionError
 import sys
 import random
+import os
 
 
 def index_page(page, judge_last_time, judge_name, url_kw):
@@ -137,14 +138,14 @@ def get_page(page_title, page_url):
             img_real_name = pattren_img_local.search(match.group())
 
             if img_real_name:
-                pattern_judge_img_real_name = re.compile(r'http')
-                judge_img_real_name = pattern_judge_img_real_name.search(match.group(1))
-                if judge_img_real_name:
-                    pattern_kw_name_save_img = re.compile(r'.*?(\w+.[jpbg][pmin]\w+)', re.I)
-                    kw_img_name = pattern_kw_name_save_img.search(match.group(1)).group(1)
-                    img_name = ' src="./img/' + kw_img_name + '"'
-                else:
-                    img_name  = ' src="./img/' + match.group(1).replace('/imagewatermark/UploadFile/','') + '"'
+                # pattern_judge_img_real_name = re.compile(r'http')
+                # judge_img_real_name = pattern_judge_img_real_name.search(match.group(1))
+                # if judge_img_real_name:
+                pattern_kw_name_save_img = re.compile(r'.*?(\w+.[jpbg][pmin]\w+)', re.I)
+                kw_img_name = pattern_kw_name_save_img.search(match.group(1)).group(1)
+                img_name = ' src="./img/' + kw_img_name + '"'
+                # else:
+                    # img_name  = ' src="./img/' + match.group(1).replace('/imagewatermark/UploadFile/','') + '"'
 
                 # print(img_name)
                 return img_name
@@ -170,13 +171,15 @@ def save_img(source, filename):
     :param source: 图片文件
     :param filename: 保存的图片名
     """
-    name_save_img =sys.path[0] + '/ebiotrade_spider_result/img/' + filename 
+    dir_save_img= sys.path[0] + '/ebiotrade_spider_result/img/'
+    if not os.path.exists(dir_save_img):
+        os.makedirs(dir_save_img)
     try:
         # 保存图片
-        with open(name_save_img, 'wb') as f:
+        with open(dir_save_img + filename, 'wb') as f:
             f.write(source)  
     except OSError as e:
-        print('图片保存失败：' + name_save_img +'\n{e}'.format(e = e))
+        print('图片保存失败：' +  filename +'\n{e}'.format(e = e))
 
 def save_page(page_title,source,filename):
     """
@@ -185,8 +188,11 @@ def save_page(page_title,source,filename):
     :param source: 结果
     :param filename: 保存的文件名
     """
+    dir_save_page = sys.path[0] + '/ebiotrade_spider_result/'
+    if not os.path.exists(dir_save_page):
+        os.makedirs(dir_save_page)
     try:
-        with open(sys.path[0] + '/ebiotrade_spider_result/' + filename, 'w', encoding = 'utf-8') as f:
+        with open(dir_save_page + filename, 'w', encoding = 'utf-8') as f:
             f.write('<h2>'+page_title+'</h2>')  
             f.write(source)
     except  OSError as e:
@@ -222,7 +228,11 @@ def main():
             url_kw = 'http://www.ebiotrade.com/newsf/list.asp?boardid=0'
             num = 41                   
         # 读取上次爬取时保存的用于判断爬取位置的字符串
-        with open(sys.path[0] + '/' + judge_name, 'r', encoding = 'utf-8') as f:
+        dir_judge = sys.path[0] + '/' + judge_name
+        if not os.path.exists(dir_judge):
+            with open(dir_judge, 'w', encoding = 'utf-8'):
+                print('创建文件：' + dir_judge)
+        with open(dir_judge, 'r', encoding = 'utf-8') as f:
                 judge_last_time = f.read()
         # judge_last_time = 1
         index_page(num, judge_last_time, judge_name, url_kw)
