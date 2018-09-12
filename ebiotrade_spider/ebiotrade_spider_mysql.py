@@ -8,6 +8,7 @@ from requests import ConnectionError
 import sys
 import random
 import os
+import pymysql
 
 
 def index_page(page, judge_last_time, judge_name, url_kw):
@@ -143,7 +144,7 @@ def get_page(page_title, page_url):
                 # if judge_img_real_name:
                 pattern_kw_name_save_img = re.compile(r'.*?(\w+.[jpbg][pmin]\w+)', re.I)
                 kw_img_name = pattern_kw_name_save_img.search(match.group(1)).group(1)
-                img_name = ' src="./img/' + kw_img_name + '"'
+                img_name = ' src="/home/bmnars/data/ebiotrade_spider_result/img/' + kw_img_name + '"'
                 # else:
                     # img_name  = ' src="./img/' + match.group(1).replace('/imagewatermark/UploadFile/','') + '"'
 
@@ -161,6 +162,7 @@ def get_page(page_title, page_url):
 
         # 保存文章内容 
         save_page(page_title, source_local, filename.group(1))
+        save_mysql(url_full, filename.group(1))
 
     else:
         print('get_page_error:' + url_full)
@@ -171,7 +173,7 @@ def save_img(source, filename):
     :param source: 图片文件
     :param filename: 保存的图片名
     """
-    dir_save_img= sys.path[0] + '/ebiotrade_spider_result/img/'
+    dir_save_img= '/home/bmnars/data/ebiotrade_spider_result/img/'
     if not os.path.exists(dir_save_img):
         os.makedirs(dir_save_img)
     try:
@@ -188,7 +190,7 @@ def save_page(page_title,source,filename):
     :param source: 结果
     :param filename: 保存的文件名
     """
-    dir_save_page = sys.path[0] + '/ebiotrade_spider_result/'
+    dir_save_page = '/home/bmnars/data/ebiotrade_spider_result/'
     if not os.path.exists(dir_save_page):
         os.makedirs(dir_save_page)
     try:
@@ -197,6 +199,43 @@ def save_page(page_title,source,filename):
             f.write(source)
     except  OSError as e:
         print('内容保存失败：' + filename + '\n{e}'.format(e = e))
+
+
+
+def save_mysql(url_source, url_local):
+    """
+    保存到文件
+    :param url_source: 文章来源url
+    :param url_local: 文章本地url
+    """
+    db = pymysql.connect(host='localhost', user='bmnars', password='vi93nwYV', port=3306, db='bmnars')
+    cursor = db.cursor()
+    url_local_full = '/home/bmnars/data/ebiotrade_spider_result/' + url_local 
+    update_time = time.strftime('%Y-%m-%d',time.localtime())
+    data = {
+        'source_url':url_source,
+        'local_url':url_local_full,
+        'source':'www.ebiotrade.com',
+	    'update_time':update_time
+    }
+    table = '_cs_bmnars_link'
+    keys = ','.join(data.keys())
+    values = ','.join(['%s']*len(data))
+    sql = 'INSERT INTO {table}({keys}) VALUES ({values}) on duplicate key update '.format(table=table, keys=keys, values=values)
+    update = ', '.join(['{key} = %s'.format(key=key) for key in data]) + ';'
+    sql += update
+    # print(sql)
+    try:
+        if cursor.execute(sql,tuple(data.values())*2):
+            db.commit()
+    except:
+        print("save_mysql_failed:" + url_source)
+        db.rollback()
+    
+    finally:
+        cursor.close()      
+        db.close()
+
 
 def main():
     """

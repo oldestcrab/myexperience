@@ -1,11 +1,7 @@
-import sys
-import os
-print(sys.path[0])
-print(os.getcwd())
+import re
 
-dir  = sys.path[0] + '/aa.txt'
-if not os.path.exists(dir):
-    with open(dir, 'w', encoding = 'utf-8'):
-        pass
-with open(dir, 'r+', encoding = 'utf-8') as f:
-    print(f.readline())
+a = r"\s\tsd\n"
+print(a)
+pattern = re.compile(r'\\t')
+b = pattern.search(a)
+print(b.group())
