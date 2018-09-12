@@ -1,6 +1,6 @@
 #### 生物通网站脚本爬取
 - 爬取相关分类下的文章
-> [生物通](http://www.ebiotrade.com/newsf/list.asp?boardid=0)
+> [生物谷](http://www.bioon.com/)
 
 ### 目录
 1. `ebiotrade_spider.py`——爬取脚本（在windows上的vs code运行）
