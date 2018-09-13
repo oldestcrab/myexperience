@@ -3,7 +3,7 @@ from tesserocr import *
 from fnmatch import fnmatch
 from queue import Queue
 import matplotlib.pyplot as plt
-from cv2 import *
+import cv2
 import time
 import os
 import sys
@@ -12,6 +12,7 @@ import sys
 def clear_border(img):
     # 去除边框
     # filename = './out_img/' + img_name.split('.')[0] + '-clearBorder.jpg'
+    img = Image.open(img)
     h, w = img.shape[:2]
     for y in range(0, w):
         for x in range(0, h):
@@ -148,7 +149,7 @@ def interference_point(img, x = 0, y = 0):
                         img[x, y] = 0
     # cv2.imwrite(filename,img)
     return img
-
+'''
 # def _get_dynamic_binary_image(filedir, img_name):
 def _get_dynamic_binary_image(img_name):
     # 自适应阀值二值化
@@ -161,7 +162,7 @@ def _get_dynamic_binary_image(img_name):
     th1 = cv2.adaptiveThreshold(im, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 1)
     # cv2.imwrite(filename,th1)
     return th1
-
+'''
 def _get_static_binary_image(img, threshold = 140):
     # 手动二值化
     img = Image.open(img)
@@ -290,11 +291,11 @@ def main():
 
     # 自适应阈值二值化
     #  im = _get_dynamic_binary_image(filedir, img_name)
-    im = _get_dynamic_binary_image(img_name)
+    # im = _get_dynamic_binary_image(img_name)
 
     # 去除边框
     # im = clear_border(im,img_name)
-    im = clear_border(im)
+    im = clear_border(img_name)
 
     # 对图片进行干扰线降噪
     # im = interference_line(im,img_name)
@@ -315,7 +316,7 @@ def main():
         # file = './out_img/%s-cutting-%s.jpg' % (img_name.split('.')[0], i)
         # 识别验证码
         # str_img = image_to_string(Image.open(file),lang = 'eng', config='-psm 10') #单个字符是10，一行文本是7
-        str_img = tesserocr.image_to_text(img_name)
+        str_img = tesserocr.image_to_text(im)
     except Exception as err:
         pass
     print('识别为：%s' % str_img)
