@@ -222,7 +222,7 @@ def main():
 
     # 读取上次爬取时最后的爬取页数，此次爬取从此页数开始
     with open(sys.path[0] + '/judge_page.txt', 'r', encoding = 'utf-8') as f:
-            judge = f.read()
+        judge = f.read()
     index_page(121, judge)
 
     print("cnki_net_spider爬取完毕，脚本退出！")

@@ -6,6 +6,7 @@ import requests
 from lxml import etree
 from requests import ConnectionError
 import pymysql
+import sys
 
 
 def index_page(page, judge, judge_name, url_kw):
@@ -49,7 +50,7 @@ def index_page(page, judge, judge_name, url_kw):
         # 写入当前爬取到的第一个文章url
         if i == 1 and source_index:
             judge_next = source_index[0]
-            with open('./' + judge_name, 'w', encoding = 'utf-8') as f:
+            with open(sys.path[0] + '/' + judge_name, 'w', encoding = 'utf-8') as f:
                 print("judge_next:\t" + judge_next)
                 f.write(judge_next)
 
@@ -223,7 +224,7 @@ def main():
             url_kw = 'http://www.whiov.ac.cn/kyjz_105338/'
             num = 2
         # 读取上次爬取时保存的用于判断爬取位置的字符串
-        with open('./' + judge_name, 'r', encoding = 'utf-8') as f:
+        with open(sys.path[0] + '/' + judge_name, 'r', encoding = 'utf-8') as f:
                 judge = f.read()
         index_page(num, judge, judge_name, url_kw)
 

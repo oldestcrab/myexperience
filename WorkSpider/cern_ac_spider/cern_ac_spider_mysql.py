@@ -209,9 +209,9 @@ def main():
     num = 3
 
     # 读取上次爬取时保存的用于判断爬取位置的字符串
-    # with open('cern_ac_spider/' + judge_name, 'r', encoding = 'utf-8') as f:
-    #         judge = f.read()
-    judge = 2
+    with open(sys.path[0] + '/' + judge_name, 'r', encoding = 'utf-8') as f:
+        judge = f.read()
+    # judge = 2
     index_page(num, judge, judge_name, url_kw)
 
     print("cern_ac_spider爬取完毕，脚本退出！")

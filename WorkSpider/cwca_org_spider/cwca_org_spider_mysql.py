@@ -6,6 +6,7 @@ import requests
 import pymysql
 from lxml import etree
 from requests import ConnectionError
+import sys
 
 
 def index_page(page, judge):
@@ -38,7 +39,7 @@ def index_page(page, judge):
     # 写入当前爬取到的第一个文章url:'/news/tidings/ff80808161da671a0163d9a89daa03b7.html'
     if page == 0:
         next_judge = index_source[0].xpath('@href')[0]
-        with open('./judge.txt', 'w', encoding = 'utf-8') as f:
+        with open(sys.path[0] + '/judge.txt', 'w', encoding = 'utf-8') as f:
             print("next_judge:\t" + next_judge)
             f.write(next_judge)
 
@@ -208,7 +209,7 @@ def main():
     print("cwca_org_spider爬取开始！")
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
     # 读取上次爬取时保存的用于判断爬取位置的字符串
-    with open('./judge.txt', 'r', encoding = 'utf-8') as f:
+    with open(sys.path[0] + '/judge.txt', 'r', encoding = 'utf-8') as f:
         judge = f.read()
     for i in range(12):
         params = index_page(i, judge)

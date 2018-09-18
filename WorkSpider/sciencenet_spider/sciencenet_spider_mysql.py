@@ -12,7 +12,7 @@ import requests
 import pymysql
 from requests.exceptions import ConnectionError
 import re
-#import os
+import sys
 
 # 构造一个 WebDriver 对象，调用phantomjs
 browser = webdriver.PhantomJS(executable_path=r'/home/bmnars/spider_porject/sciencenet_spider/phantomjs-2.1.1-linux-x86_64/bin/phantomjs')
@@ -249,12 +249,12 @@ def main():
             # 论文为总页数为259
             num = 7
             # 领域新闻的判断文件名
-            judge_name = './paper_url_judge.txt'
+            judge_name = sys.path[0] + '/paper_url_judge.txt'
         if wd == 1:
             url = 'http://news.sciencenet.cn/fieldlist.aspx?id=3'
             judge_width = '@width = "60%"'
             num = 51
-            judge_name = './news_url_judge.txt'
+            judge_name = sys.path[0] + '/news_url_judge.txt'
 
         # 读取上次爬取时保存的用于判断爬取位置的字符串
         with open(judge_name, 'r', encoding = 'utf-8') as f:

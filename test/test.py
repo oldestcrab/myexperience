@@ -7,6 +7,8 @@ import cv2
 import time
 import os
 import sys
+import numpy as np
+
 
 # def clear_border(img,img_name):
 def clear_border(img):

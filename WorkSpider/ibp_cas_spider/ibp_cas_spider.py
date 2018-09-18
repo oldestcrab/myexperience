@@ -184,7 +184,7 @@ def main():
     num = 3
 
     with open(sys.path[0] + '/' + judge_name, 'r', encoding = 'utf-8') as f:
-            judge = f.read()
+        judge = f.read()
     index_page(num, judge, judge_name, url_kw)
 
     print("ibp_cas_spider爬取完毕，脚本退出！")
