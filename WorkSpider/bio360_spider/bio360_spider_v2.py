@@ -118,29 +118,14 @@ def get_page(url_page):
             except:
                 print('图片网址有误:' + url_full_img)
 
-        def url_img_name(match):
-            """
-            匹配文章内容中的图片url，替换为本地url
-            """
-            # http://www.bio360.net/storage/image/2018/08/FG3XNGQGmD2HxBMqFgNNmiuLNXjTWHU9cnblI8TV.png
-            pattren_img_local = re.compile(r'\.[pjbg][pinm]', re.I)
-            img_real_name = pattren_img_local.search(match.group())
-            # print('match.group(1)', match.group(1))
-            if img_real_name and match.group(1):
-                pattern_kw_name_save_img = re.compile(r'.*\/(.*\.[jpbg][pmin]\w+)', re.I)
-                kw_img_name = pattern_kw_name_save_img.search(match.group(1)).group(1)
-                img_name = ' src="./img/' + kw_img_name + '">'
-                # print('img_name:', type(img_name), img_name)
-                return img_name
-
-        # 匹配文章内容中的图片url，替换为本地图片url
-        pattren_img_local = re.compile(r'<img .*\ssrc="(.*?)".*?">?')
-        source_local = pattren_img_local.sub(url_img_name, source_article)
+        
         # 提取url中的154727作为文件名保存: http://www.bio360.net/article/154727
         pattren_filename = re.compile(r'.*\/(.*)?', re.I)
         filename = pattren_filename.search(url_page)
         # print('filename.group(1):', type(filename.group(1)), filename.group(1))
-        list_article = parse_page(source_local)
+
+        # 解析文章，提取有用的内容，剔除不需要的，返回内容列表
+        list_article = parse_page(source_article)
         # 保存文章内容 
         save_page(list_article, filename.group(1))
 
@@ -148,28 +133,56 @@ def get_page(url_page):
         print('get_page_error:' + url_page)
 
 def parse_page(source_local):
+        # 需要的内容保存到列表里，写入为.xml文件
         list_article = []
         # 利用etree.HTML，将字符串解析为HTML文档
         html_source_local = etree.HTML(source_local) 
         # print(type(html_source_local),html_source_local)
+
         # title_article: 第四届发育和疾病的表观遗传学上海国际研讨会在沪隆重开幕
         title_article = html_source_local.xpath('//h1')[0].text
         title_article = '<title>' + title_article + '</title>'
         list_article.append(title_article)
-        print(type(title_article),title_article)
+        # print(type(title_article),title_article)
+
+        # source_article：来源： 中科普瑞 / 作者：  2018-09-11
         source_article = html_source_local.xpath('//div[@class="item-time col-sm-8"]')[0].text
         source_article = '<source>' + source_article + '</source>'
         list_article.append(source_article)
-        print(type(source_article),source_article)
-        # 通过正则表达式获取文章中需要的内容
+        # print(type(source_article),source_article)
+
+        # 通过正则表达式获取文章中需要的内容，即正文部分
         pattren_article_content = re.compile(r'<div class="article-content">.*<div class="statement"', re.I|re.S)
         source_article = pattren_article_content.search(source_local)
         # print('source_article.group():', type(source_article.group()), source_article.group())
+
         if source_article:
             source_article = source_article.group()
-            source_article = source_article.replace('<div class="article-content">','').replace('<div class="statement"','')
             # print(source_article)
-            list_article.append(source_article)
+
+            def url_img_name(match):
+                """
+                匹配文章内容中的图片url，替换为本地url
+                """
+                # http://www.bio360.net/storage/image/2018/08/FG3XNGQGmD2HxBMqFgNNmiuLNXjTWHU9cnblI8TV.png
+                pattren_img_local = re.compile(r'\.[pjbg][pinm]', re.I)
+                img_real_name = pattren_img_local.search(match.group())
+                print('match.group(1)', match.group())
+                if img_real_name and match.group(1):
+                    pattern_kw_name_save_img = re.compile(r'.*\/(.*\.[jpbg][pmin]\w+)', re.I)
+                    kw_img_name = pattern_kw_name_save_img.search(match.group(1)).group(1)
+                    img_name = '<img src="./img/' + kw_img_name + '">'
+                    # print('img_name:', type(img_name), img_name)
+                    return img_name
+
+            # 匹配文章内容中的图片url，替换为本地图片url
+            pattren_img_local = re.compile(r'<img.*?\ssrc="(.*?)".*?>{1}', re.I|re.S)
+            source_local = pattren_img_local.sub(url_img_name, source_article)
+            # 剔除不需要的内容
+            source_local = source_local.replace('<p style="text-align: center;">','<p>').replace('</blockquote>','').replace('<blockquote>','').replace('style="background-color: rgb(255, 255, 255);"','').replace('align="center" style="text-align: center;"','').replace('<div>','').replace('</div>','').replace('<div class="article-content">','').replace('<div class="statement"','')
+            # 清洗后的正文
+            source_local = '<content>\n' + source_local + '</content>\n'
+            list_article.append(source_local)
         return list_article
 
 
