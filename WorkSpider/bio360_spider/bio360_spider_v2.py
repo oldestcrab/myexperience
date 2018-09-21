@@ -122,12 +122,13 @@ def get_page(url_page):
         # 提取url中的154727作为文件名保存: http://www.bio360.net/article/154727
         pattren_filename = re.compile(r'.*\/(.*)?', re.I)
         filename = pattren_filename.search(url_page)
+        filename = filename.group(1) + '.xml'
         # print('filename.group(1):', type(filename.group(1)), filename.group(1))
 
         # 解析文章，提取有用的内容，剔除不需要的，返回内容列表
         list_article = parse_page(source_article)
         # 保存文章内容 
-        save_page(list_article, filename.group(1))
+        save_page(list_article, filename)
 
     else:
         print('get_page_error:' + url_page)
@@ -135,19 +136,20 @@ def get_page(url_page):
 def parse_page(source_local):
         # 需要的内容保存到列表里，写入为.xml文件
         list_article = []
+        list_article.append('<Document>')
         # 利用etree.HTML，将字符串解析为HTML文档
         html_source_local = etree.HTML(source_local) 
         # print(type(html_source_local),html_source_local)
 
         # title_article: 第四届发育和疾病的表观遗传学上海国际研讨会在沪隆重开幕
         title_article = html_source_local.xpath('//h1')[0].text
-        title_article = '<title>' + title_article + '</title>'
+        title_article = '<title>' + title_article + '</title>\n'
         list_article.append(title_article)
         # print(type(title_article),title_article)
 
         # source_article：来源： 中科普瑞 / 作者：  2018-09-11
         source_article = html_source_local.xpath('//div[@class="item-time col-sm-8"]')[0].text
-        source_article = '<source>' + source_article + '</source>'
+        source_article = '<source>' + source_article + '</source>\n'
         list_article.append(source_article)
         # print(type(source_article),source_article)
 
@@ -167,22 +169,37 @@ def parse_page(source_local):
                 # http://www.bio360.net/storage/image/2018/08/FG3XNGQGmD2HxBMqFgNNmiuLNXjTWHU9cnblI8TV.png
                 pattren_img_local = re.compile(r'\.[pjbg][pinm]', re.I)
                 img_real_name = pattren_img_local.search(match.group())
-                print('match.group(1)', match.group())
+                # print('match.group(1)', match.group())
                 if img_real_name and match.group(1):
                     pattern_kw_name_save_img = re.compile(r'.*\/(.*\.[jpbg][pmin]\w+)', re.I)
                     kw_img_name = pattern_kw_name_save_img.search(match.group(1)).group(1)
-                    img_name = '<img src="./img/' + kw_img_name + '">'
+                    img_name = '<img src="./img/' + kw_img_name + '" />'
                     # print('img_name:', type(img_name), img_name)
                     return img_name
 
             # 匹配文章内容中的图片url，替换为本地图片url
             pattren_img_local = re.compile(r'<img.*?\ssrc="(.*?)".*?>{1}', re.I|re.S)
             source_local = pattren_img_local.sub(url_img_name, source_article)
+
             # 剔除不需要的内容
-            source_local = source_local.replace('<p style="text-align: center;">','<p>').replace('</blockquote>','').replace('<blockquote>','').replace('style="background-color: rgb(255, 255, 255);"','').replace('align="center" style="text-align: center;"','').replace('<div>','').replace('</div>','').replace('<div class="article-content">','').replace('<div class="statement"','')
+            def article_change(match):
+                """
+                匹配文章内容中的标签（a、img）除外，剔除其中的样式
+                """
+                # <p src="./img/13SsuHuXECVJ<p style="text-align: center;"> p
+                # print(match.group(),match.group(1))
+                name_tag = '<' + match.group(1) + '>'
+                return name_tag
+
+            pattren_article_change = re.compile(r'<([^ai]\w*)\s.*?>{1}')
+            source_local = pattren_article_change.sub(article_change,source_local)
+
+            # source_local = source_local.replace('</blockquote>','').replace('<blockquote>','').replace('style="background-color: rgb(255, 255, 255);"','').replace('align="center" style="text-align: center;"','').replace('<div>','').replace('</div>','').replace('<div class="article-content">','').replace('<div class="statement"','').replace('<div style="text-align: center;">','').strip().replace('&','&amp;').replace('style="text-align: center; "','').replace('style="font-size: 14px;"','').replace('style="text-align: left;"','')
+            source_local = source_local.replace('</blockquote>','').replace('<blockquote>','').replace('<div>','').replace('</div>','').replace('<div class="article-content">','').replace('<div class="statement"','').replace('<div style="text-align: center;">','').strip().replace('&','&amp;')
             # 清洗后的正文
             source_local = '<content>\n' + source_local + '</content>\n'
             list_article.append(source_local)
+            list_article.append('</Document>')
         return list_article
 
 
@@ -213,7 +230,7 @@ def save_page(list_article,filename):
     if not os.path.exists(dir_save_page):
         os.makedirs(dir_save_page)
     try:
-        with open(dir_save_page + filename + '.html', 'w', encoding = 'utf-8') as f:
+        with open(dir_save_page + filename , 'w', encoding = 'utf-8') as f:
             for i in list_article:
                 f.write(i)
     except  OSError as e:
