@@ -198,7 +198,7 @@ def parse_page(source_local):
     source_local = pattren_article_change_2.sub('<p>', source_local)
 
     # 剔除一些杂乱的样式
-    source_local = source_local.replace('&nbsp;','').strip().replace('&','&amp;').replace('&amp;ldquo;','').replace('&amp;rdquo;','')
+    source_local = source_local.replace('&nbsp;','').replace('&amp;middot;','').replace('&amp;mdash;','').strip().replace('&','&amp;').replace('&amp;ldquo;','').replace('&amp;rdquo;','')
 
     # 清洗后的正文
     # print(source_local)
@@ -248,9 +248,9 @@ def main():
     if not os.path.exists(dir_judge):
         with open(dir_judge, 'w', encoding = 'utf-8'):
             print('创建文件：' + dir_judge)
-    # with open(dir_judge, 'r', encoding = 'utf-8') as f:
-        # judge = f.read()
-    judge = 2
+    with open(dir_judge, 'r', encoding = 'utf-8') as f:
+        judge = f.read()
+    # judge = 2
     for i in range(7):
         params = index_page(i, judge)
         print('保存第', str(i+1), '页索引页所有文章成功')  
