@@ -294,9 +294,9 @@ def main():
     if not os.path.exists(dir_judge):
         with open(dir_judge, 'w', encoding = 'utf-8'):
             print('创建文件：' + dir_judge)
-    # with open(dir_judge, 'r', encoding = 'utf-8') as f:
-        # judge = f.read()
-    judge = 1
+    with open(dir_judge, 'r', encoding = 'utf-8') as f:
+        judge = f.read()
+    # judge = 1
     index_page(num, judge, judge_name, url_kw)
 
     print("cern_ac_spider爬取完毕，脚本退出！")

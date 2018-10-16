@@ -7,6 +7,8 @@ from lxml import etree
 from requests import ConnectionError
 import sys
 import os
+import pymysql
+
 
 def index_page(page, judge, judge_name, url_kw):
     """
@@ -76,7 +78,7 @@ def get_page(url, url_kw, source_time):
     # url:./201804/t20180424_5001331.html
     # url_full：http://www.genetics.ac.cn/xwzx/kyjz/201808/t20180817_5056985.html
     url_full = url_kw + url.replace('./','')
-    print(url_full)
+    # print(url_full)
     headers = {'user-agent':'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)'}
 
     # 获取文章
@@ -131,6 +133,7 @@ def get_page(url, url_kw, source_time):
         list_article = parse_page(source_article, source_time)
         # 保存文章内容 
         save_page(list_article, filename)
+        save_mysql(url_full, filename)
 
     else:
         print('error:' + url_full)
@@ -180,7 +183,7 @@ def parse_page(source_local, source_time):
             if img_real_name and match.group(1):
                 pattern_kw_name_save_img = re.compile(r'.*\/(.*\.[jpbg][pmin]\w+)', re.I)
                 kw_img_name = pattern_kw_name_save_img.search(match.group(1)).group(1).replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
-                img_name = '<img src="./img/' + kw_img_name + '" />'
+                img_name = '<img src="/home/bmnars/data/genetics_ac_spider_result_v2/img/' + kw_img_name + '" />'
                 # print('img_name:', type(img_name), img_name)
                 return img_name
 
@@ -226,7 +229,7 @@ def save_img(source, filename):
     :param source: 图片文件
     :param filename: 保存的图片名
     """
-    img_save_full_name = sys.path[0] + '/genetics_ac_spider_result/img/'
+    img_save_full_name = '/home/bmnars/data/genetics_ac_spider_result_v2/img/'
     if not os.path.exists(img_save_full_name):
         os.makedirs(img_save_full_name)
     try:
@@ -241,7 +244,7 @@ def save_page(list_article,filename):
     :param list_article: 结果
     :param filename: 保存的文件名
     """
-    dir_save_page = sys.path[0] + '/genetics_ac_spider_result/'
+    dir_save_page = '/home/bmnars/data/genetics_ac_spider_result_v2/'
     if not os.path.exists(dir_save_page):
         os.makedirs(dir_save_page)
     try:
@@ -250,6 +253,43 @@ def save_page(list_article,filename):
                 f.write(i)
     except  OSError as e:
         print('内容保存失败：' + filename + '\n{e}'.format(e = e))
+
+
+
+
+def save_mysql(url_source, url_local):
+    """
+    保存到文件
+    :param url_source: 文章来源url
+    :param url_local: 文章本地url
+    """
+    db = pymysql.connect(host='localhost', user='bmnars', password='vi93nwYV', port=3306, db='bmnars')
+    cursor = db.cursor()
+    url_local_full = '/home/bmnars/data/genetics_ac_spider_result_v2/' + url_local  
+    update_time = time.strftime('%Y-%m-%d',time.localtime())
+    data = {
+        'source_url':url_source,
+        'local_url':url_local_full,
+        'source':'www.genetics.ac.cn',
+	    'update_time':update_time
+    }
+    table = '_cs_bmnars_link_xml'
+    keys = ','.join(data.keys())
+    values = ','.join(['%s']*len(data))
+    sql = 'INSERT INTO {table}({keys}) VALUES ({values}) on duplicate key update '.format(table=table, keys=keys, values=values)
+    update = ', '.join(['{key} = %s'.format(key=key) for key in data]) + ';'
+    sql += update
+    # print(sql)
+    try:
+        if cursor.execute(sql,tuple(data.values())*2):
+            db.commit()
+    except:
+        print("save_mysql_failed:" + url_source)
+        db.rollback()
+    
+    finally:
+        cursor.close()      
+        db.close()
 
 def main():
     """

@@ -7,6 +7,7 @@ from lxml import etree
 from requests import ConnectionError
 import sys
 import os
+import pymysql
 
 
 def index_page(page, judge):
@@ -120,6 +121,8 @@ def get_page(url):
         list_article = parse_page(article_source)
         # 保存文章内容 
         save_page(list_article, filename)
+        save_mysql(full_url, filename)
+
     else:
         print('正则匹配错误error:' + full_url)
 
@@ -169,7 +172,7 @@ def parse_page(source_local):
         if img_real_name and match.group(1):
             pattern_kw_name_save_img = re.compile(r'.*\/(.*\.[jpbg][pmin]\w+)', re.I)
             kw_img_name = pattern_kw_name_save_img.search(match.group(1)).group(1).replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
-            img_name = '<img src="./img/' + kw_img_name + '" />'
+            img_name = '<img src="/home/bmnars/data/cwca_org_spider_result_v2/img/' + kw_img_name + '" />'
             # print('img_name:', type(img_name), img_name)
             return img_name
 
@@ -215,7 +218,7 @@ def save_img(result, filename):
     :param result: 图片文件
     :param filename: 保存的图片名
     """
-    img_save_full_name = sys.path[0] + '/cwca_org_spider_result/img/'
+    img_save_full_name = '/home/bmnars/data/cwca_org_spider_result_v2/img/'
     if not os.path.exists(img_save_full_name):
         os.makedirs(img_save_full_name)
     try:
@@ -229,7 +232,7 @@ def save_page(list_article,filename):
     保存到文件
     :param list_article: 结果
     """
-    dir_save_page = sys.path[0] + '/cwca_org_spider_result/'
+    dir_save_page = '/home/bmnars/data/cwca_org_spider_result_v2/'
     if not os.path.exists(dir_save_page):
         os.makedirs(dir_save_page)
     try:
@@ -238,6 +241,41 @@ def save_page(list_article,filename):
                 f.write(i)
     except  OSError as e:
         print('内容保存失败：' + filename + '\n{e}'.format(e = e))
+
+
+def save_mysql(url_source, url_local):
+    """
+    保存到文件
+    :param url_source: 文章来源url
+    :param url_local: 文章本地url
+    """
+    db = pymysql.connect(host='localhost', user='bmnars', password='vi93nwYV', port=3306, db='bmnars')
+    cursor = db.cursor()
+    url_local_full = '/home/bmnars/data/cwca_org_spider_result_v2/' + url_local  
+    update_time = time.strftime('%Y-%m-%d',time.localtime())
+    data = {
+        'source_url':url_source,
+        'local_url':url_local_full,
+        'source':'http://www.cwca.org.cn',
+	    'update_time':update_time
+    }
+    table = '_cs_bmnars_link_xml'
+    keys = ','.join(data.keys())
+    values = ','.join(['%s']*len(data))
+    sql = 'INSERT INTO {table}({keys}) VALUES ({values}) on duplicate key update '.format(table=table, keys=keys, values=values)
+    update = ', '.join(['{key} = %s'.format(key=key) for key in data]) + ';'
+    sql += update
+    # print(sql)
+    try:
+        if cursor.execute(sql,tuple(data.values())*2):
+            db.commit()
+    except:
+        print("save_mysql_failed:" + url_source)
+        db.rollback()
+    
+    finally:
+        cursor.close()      
+        db.close()
 
 def main():
     """
