@@ -7,6 +7,7 @@ from lxml import etree
 from requests import ConnectionError
 import sys
 import os
+import pymysql
 
 
 def index_page(page, judge, judge_name, url):
@@ -75,7 +76,7 @@ def get_page(url):
         pattern_img = re.compile(r'<img(.*?)\ssrc="(.*?)"', re.I)
         findall_img = pattern_img.findall(article_source)
         for kw in findall_img:
-            # kw[1]: http://www.bio360.net/storage/image/2018/08/FG3XNGQGmD2HxBMqFgNNmiuLNXjTWHU9cnblI8TV.png
+            # kw[1]: http://www.biotech_org.net/storage/image/2018/08/FG3XNGQGmD2HxBMqFgNNmiuLNXjTWHU9cnblI8TV.png
             # 判断图片URL是否需要组合
             pattern_judge_img = re.compile(r'http', re.I)
             judge_img = pattern_judge_img.search(kw[1])
@@ -101,12 +102,14 @@ def get_page(url):
         filename_pattren = re.compile(r'\d+')
         filename = filename_pattren.search(url).group() + '.xml'
         filename = filename.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
-        # print(filename)     
+        # print(filename)  
 
         # 解析文章，提取有用的内容，剔除不需要的，返回内容列表
         list_article = parse_page(article_source)
         # 保存文章内容 
         save_page(list_article, filename)
+        save_mysql(full_url, filename)
+
 
     else:
         print('get_page_error:' + full_url)
@@ -148,7 +151,7 @@ def parse_page(source_local):
             """
             匹配文章内容中的图片url，替换为本地url
             """
-            # http://www.bio360.net/storage/image/2018/08/FG3XNGQGmD2HxBMqFgNNmiuLNXjTWHU9cnblI8TV.png
+            # http://www.biotech_org.net/storage/image/2018/08/FG3XNGQGmD2HxBMqFgNNmiuLNXjTWHU9cnblI8TV.png
             pattren_img_local = re.compile(r'\.[pjbg][pinm]', re.I)
             img_real_name = pattren_img_local.search(match.group())
             # print('match.group()', match.group())
@@ -156,7 +159,7 @@ def parse_page(source_local):
             if img_real_name and match.group(1):
                 pattern_kw_name_save_img = re.compile(r'.*\/(.*\.[jpbg][pmin]\w+)', re.I)
                 kw_img_name = pattern_kw_name_save_img.search(match.group(1)).group(1).replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
-                img_name = '<img src="./img/' + kw_img_name + '" />'
+                img_name = '<img src="/home/bmnars/data/biotech_org_spider_result_v2/img/' + kw_img_name + '" />'
                 # print('img_name:', type(img_name), img_name)
                 return img_name
 
@@ -200,7 +203,7 @@ def save_img(source, filename):
     :param source: 图片文件
     :param filename: 保存的图片名
     """
-    dir_save_img= sys.path[0] + '/biotech_org_spider_result/img/'
+    dir_save_img= '/home/bmnars/data/biotech_org_spider_result_v2/img/'
     if not os.path.exists(dir_save_img):
         os.makedirs(dir_save_img)
     try:
@@ -216,7 +219,7 @@ def save_page(list_article,filename):
     :param list_article: 结果
     :param filename: 保存的文件名
     """
-    dir_save_page = sys.path[0] + '/biotech_org_spider_result/'
+    dir_save_page = '/home/bmnars/data/biotech_org_spider_result_v2/'
     if not os.path.exists(dir_save_page):
         os.makedirs(dir_save_page)
     try:
@@ -225,6 +228,40 @@ def save_page(list_article,filename):
                 f.write(i)
     except  OSError as e:
         print('内容保存失败：' + filename + '\n{e}'.format(e = e))
+
+def save_mysql(url_source, url_local):
+    """
+    保存到文件
+    :param url_source: 文章来源url
+    :param url_local: 文章本地url
+    """
+    db = pymysql.connect(host='localhost', user='bmnars', password='vi93nwYV', port=3306, db='bmnars')
+    cursor = db.cursor()
+    url_local_full = '/home/bmnars/data/biotech_org_spider_result_v2/' + url_local  
+    update_time = time.strftime('%Y-%m-%d',time.localtime())
+    data = {
+        'source_url':url_source,
+        'local_url':url_local_full,
+        'source':'www.biotech.org.cn',
+	    'update_time':update_time
+    }
+    table = '_cs_bmnars_link_xml'
+    keys = ','.join(data.keys())
+    values = ','.join(['%s']*len(data))
+    sql = 'INSERT INTO {table}({keys}) VALUES ({values}) on duplicate key update '.format(table=table, keys=keys, values=values)
+    update = ', '.join(['{key} = %s'.format(key=key) for key in data]) + ';'
+    sql += update
+    # print(sql)
+    try:
+        if cursor.execute(sql,tuple(data.values())*2):
+            db.commit()
+    except:
+        print("save_mysql_failed:" + url_source)
+        db.rollback()
+    
+    finally:
+        cursor.close()      
+        db.close()
 
 def main():
     """
@@ -260,9 +297,8 @@ def main():
             url = 'http://www.biotech.org.cn/topic/110/page/'
     
         # 读取上次爬取时保存的用于判断爬取位置的字符串
-        # with open(sys.path[0] + '/' + judge_name, 'r', encoding = 'utf-8') as f:
-                # judge = f.read()
-        judge = 1
+        with open(sys.path[0] + '/' + judge_name, 'r', encoding = 'utf-8') as f:
+                judge = f.read()
         for i in range(1,2):
             params = index_page(i, judge, judge_name, url)
             if params == 1:
