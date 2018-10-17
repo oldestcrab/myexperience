@@ -154,7 +154,13 @@ def parse_page(source_local):
 
     # source_article：来源： 中科普瑞 / 作者：  2018-09-11
     source_article = html_source_local.xpath('//div[@class="item-time col-sm-8"]')[0].text
-    source_article = '<source>' + source_article + '</source>\n'
+    pattern_search_source = re.compile(r'来源：(.*?)/{1}')
+    result_source = pattern_search_source.search(source_article).group(1).strip()
+    pattern_search_time = re.compile(r'\d\d\d\d-\d\d-\d\d')
+    result_time = pattern_search_time.search(source_article).group().strip()
+    pattern_search_user_ = re.compile(r'作者：(.*?)\d\d\d\d-\d\d-\d\d')
+    result_user = pattern_search_user_.search(source_article).group(1).replace('/','').replace('时间：','').strip()
+    source_article = '<source>' + '<source>' + result_source + '</source>' + '<user>' + result_user + '</user>' + '<time>' + result_time + '</time>' + '</source>\n'
     list_article.append(source_article)
     # print(type(source_article),source_article)
 
@@ -186,7 +192,7 @@ def parse_page(source_local):
         # 匹配文章内容中的图片url，替换为本地图片url
         pattren_img_local = re.compile(r'<img.*?\ssrc="(.*?)".*?>{1}', re.I|re.S)
         source_local = pattren_img_local.sub(url_img_name, source_article)
-
+        # print(source_local)
         # 剔除不需要的内容
         def article_change(match):
             """
@@ -198,15 +204,18 @@ def parse_page(source_local):
             return name_tag
 
         pattren_article_change = re.compile(r'<([^aip]\w*)\s*.*?>{1}')
-        source_local = pattren_article_change.sub(article_change, source_article)
-
+        source_local = pattren_article_change.sub(article_change, source_local)
+        # print(source_local)
         pattren_article_change_1 = re.compile(r'</[^p].*?>{1}')
         source_local = pattren_article_change_1.sub('', source_local)
+        # print(source_local)
 
         # source_local = source_local.replace('</blockquote>','').replace('<blockquote>','').replace('style="background-color: rgb(255, 255, 255);"','').replace('align="center" style="text-align: center;"','').replace('<div>','').replace('</div>','').replace('<div class="article-content">','').replace('<div class="statement"','').replace('<div style="text-align: center;">','').strip().replace('&','&amp;').replace('style="text-align: center; "','').replace('style="font-size: 14px;"','').replace('style="text-align: left;"','')
         source_local = source_local.replace('</blockquote>','').replace('<blockquote>','').replace('<div>','').replace('</div>','').replace('<div class="article-content">','').replace('<div class="statement"','').replace('<div style="text-align: center;">','').strip().replace('&','&amp;')
+        # print(source_local)
 
         # 清洗后的正文
+        # print(source_local)
         source_local = '<content>\n' + source_local + '</content>\n'
         list_article.append(source_local)
         list_article.append('</Document>')
@@ -264,9 +273,9 @@ def main():
         if not os.path.exists(dir_judge):
             with open(dir_judge, 'w', encoding = 'utf-8'):
                 print('创建文件：' + dir_judge)
-        with open(dir_judge, 'r', encoding = 'utf-8') as f:
-            judge_last_time = f.read()
-        # judge_last_time = 1
+        # with open(dir_judge, 'r', encoding = 'utf-8') as f:
+            # judge_last_time = f.read()
+        judge_last_time = 1
         index_page(num, judge_last_time, judge_name, url_kw)
 
     print("bio360_spider爬取完毕，脚本退出！")

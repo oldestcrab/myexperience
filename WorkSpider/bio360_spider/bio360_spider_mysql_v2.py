@@ -155,7 +155,13 @@ def parse_page(source_local):
 
     # source_article：来源： 中科普瑞 / 作者：  2018-09-11
     source_article = html_source_local.xpath('//div[@class="item-time col-sm-8"]')[0].text
-    source_article = '<source>' + source_article + '</source>\n'
+    pattern_search_source = re.compile(r'来源：(.*?)/{1}')
+    result_source = pattern_search_source.search(source_article).group(1).strip()
+    pattern_search_time = re.compile(r'\d\d\d\d-\d\d-\d\d')
+    result_time = pattern_search_time.search(source_article).group().strip()
+    pattern_search_user_ = re.compile(r'作者：(.*?)\d\d\d\d-\d\d-\d\d')
+    result_user = pattern_search_user_.search(source_article).group(1).replace('/','').replace('时间：','').strip()
+    source_article = '<source>' + '<source>' + result_source + '</source>' + '<user>' + result_user + '</user>' + '<time>' + result_time + '</time>' + '</source>\n'
     list_article.append(source_article)
     # print(type(source_article),source_article)
 
@@ -199,7 +205,7 @@ def parse_page(source_local):
             return name_tag
 
         pattren_article_change = re.compile(r'<([^aip]\w*)\s*.*?>{1}')
-        source_local = pattren_article_change.sub(article_change, source_article)
+        source_local = pattren_article_change.sub(article_change, source_local)
 
         pattren_article_change_1 = re.compile(r'</[^p].*?>{1}')
         source_local = pattren_article_change_1.sub('', source_local)

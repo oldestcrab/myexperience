@@ -145,9 +145,10 @@ def parse_page(source_local):
     # source_article = html_source_local.xpath('//td[@valign = "top" and @height = "374"]/table/tbody/tr/td/table[2]/tbody/tr[2]/td')[0].text
     pattren_article_time = re.compile(r'<td>.*?(\d\d\d\d-\d\d-\d\d).*?</td>', re.I|re.S)
     source_time = pattren_article_time.search(source_local).group(1)
-    source_time = '<source>' + source_time + '</source>\n'
-    list_article.append(source_time)
+    source_article = '<source>' + '<source>' + '<b />' + 'www.cern.ac.cn' + '</source>' + '<user>'  + '</user>' + '<time>' + source_time + '</time>' + '</source>\n'
+    list_article.append(source_article)
     # print(type(source_time),source_time)
+
 
     # 通过正则表达式获取文章中需要的内容，即正文部分
     pattren_article_content = re.compile(r'</td>.*?</td>{1}(.*)<td height="25">', re.I|re.S)

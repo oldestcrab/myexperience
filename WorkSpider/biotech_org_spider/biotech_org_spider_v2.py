@@ -132,7 +132,13 @@ def parse_page(source_local):
 
     # source_article：来源： 中科普瑞 / 作者：  2018-09-11
     source_article = html_source_local.xpath('//div[@id = "date"]')[0].text
-    source_article = '<source>' + source_article + '</source>\n'
+    pattern_search_source = re.compile(r'来源：(.*?)发布者：', re.I|re.S)
+    result_source = pattern_search_source.search(source_article).group(1).strip()
+    pattern_search_time = re.compile(r'日期：(\d\d\d\d-\d\d-\d\d)', re.I|re.S)
+    result_time = pattern_search_time.search(source_article).group(1).strip()
+    pattern_search_user_ = re.compile(r'发布者：(.*?)日期：', re.I|re.S)
+    result_user = pattern_search_user_.search(source_article).group(1).strip()
+    source_article = '<source>' + '<source>' + result_source + '</source>' + '<user>' + result_user + '</user>' + '<time>' + result_time + '</time>' + '</source>\n'
     list_article.append(source_article)
     # print(type(source_article),source_article)
 

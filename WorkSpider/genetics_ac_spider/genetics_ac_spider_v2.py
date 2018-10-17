@@ -76,7 +76,7 @@ def get_page(url, url_kw, source_time):
     # url:./201804/t20180424_5001331.html
     # url_full：http://www.genetics.ac.cn/xwzx/kyjz/201808/t20180817_5056985.html
     url_full = url_kw + url.replace('./','')
-    print(url_full)
+    # print(url_full)
     headers = {'user-agent':'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)'}
 
     # 获取文章
@@ -118,7 +118,7 @@ def get_page(url, url_kw, source_time):
                     save_img(response_img, name_save_img)
 
                 except:
-                    print('图片网址有误:' + '\n' + url_full_img + '\n' + url_page)
+                    print('图片网址有误:' + '\n' + url_full_img + '\n' + url_full)
 
 
         # 提取url中的20180424_5001331.html作为文件名保存: ./201804/t20180424_5001331.html
@@ -157,7 +157,7 @@ def parse_page(source_local, source_time):
 
     # source_article：来源： 中科普瑞 / 作者：  2018-09-11
     # source_article = html_source_local.xpath('//div[@id = "date"]')[0].text
-    source_article = '<source>' + source_time + '</source>\n'
+    source_article = '<source>' + '<source>'  + '</source>' + '<user>' + '</user>' + '<time>' + source_time + '</time>' + '</source>\n'
     list_article.append(source_article)
     # print(type(source_article),source_article)
 

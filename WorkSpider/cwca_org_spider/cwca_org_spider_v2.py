@@ -143,10 +143,10 @@ def parse_page(source_local):
     # print(type(title_article),title_article)
 
     # source_article：来源： 中科普瑞 / 作者：  2018-09-11
-    source_article_1 = html_source_local.xpath('//div[@class = "nr"]/span[1]')[0].text
-    source_article_2 = html_source_local.xpath('//div[@class = "nr"]/span[2]')[0].text
-    source_article_3 = html_source_local.xpath('//div[@class = "nr"]/span[3]')[0].text
-    source_article = '<source>' + source_article_1 + source_article_2 + source_article_3 + '</source>\n'
+    source_article_time = html_source_local.xpath('//div[@class = "nr"]/span[1]')[0].text.replace('发布日期：','')
+    source_article_source = html_source_local.xpath('//div[@class = "nr"]/span[2]')[0].text.replace('来源：','')
+    source_article_user = html_source_local.xpath('//div[@class = "nr"]/span[3]')[0].text.replace('作者：','')
+    source_article = '<source>' + '<source>' + source_article_source + '</source>' + '<user>' + source_article_user + '</user>' + '<time>' + source_article_time + '</time>' + '</source>\n'
     list_article.append(source_article)
     # print(type(source_article),source_article)
 
@@ -249,9 +249,9 @@ def main():
     if not os.path.exists(dir_judge):
         with open(dir_judge, 'w', encoding = 'utf-8'):
             print('创建文件：' + dir_judge)
-    with open(dir_judge, 'r', encoding = 'utf-8') as f:
-        judge = f.read()
-    # judge = 2
+    # with open(dir_judge, 'r', encoding = 'utf-8') as f:
+    #     judge = f.read()
+    judge = 2
     for i in range(7):
         params = index_page(i, judge)
         print('保存第', str(i+1), '页索引页所有文章成功')  
