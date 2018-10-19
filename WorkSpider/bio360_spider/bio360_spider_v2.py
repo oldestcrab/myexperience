@@ -87,51 +87,71 @@ def get_page(url_page):
     pattren_article = re.compile(r'<div class="article-header">.*不代表本站立场', re.I|re.S)
     source_article = pattren_article.search(response_article.text)
     # print('source_article.group():', type(source_article.group()), source_article.group())
-    if source_article:
-        source_article = source_article.group()
-        # 获取文章中所有的图片url链接: http://www.bio360.net/storage/image/2018/08/FG3XNGQGmD2HxBMqFgNNmiuLNXjTWHU9cnblI8TV.png
-        pattern_img = re.compile(r'<img(.*?)\ssrc="(.*?)"', re.I)
-        findall_img = pattern_img.findall(source_article)
-        # print('findall_img:', type(findall_img), findall_img)
-        for kw in findall_img:
-            # kw[1]: http://www.bio360.net/storage/image/2018/08/FG3XNGQGmD2HxBMqFgNNmiuLNXjTWHU9cnblI8TV.png
-            # 判断图片URL是否需要组合
-            # print('kw[1]',kw[1])
-            pattern_judge_img = re.compile(r'http', re.I)
-            judge_img = pattern_judge_img.search(kw[1])
-            if judge_img:
-                url_full_img = kw[1]
+
+    # 文章来源列表
+    list_source = ['生物360']
+    # 判断文章是原创还是转载，如果是原创则进行爬取
+    html_source_local = etree.HTML(response_article.text) 
+    result_source = html_source_local.xpath('//div[@class="item-time col-sm-8"]')[0].text
+    pattern_search_source = re.compile(r'来源：(.*?)/{1}')
+    judge_source = pattern_search_source.search(result_source).group(1).strip()
+    # print(judge_source)
+    for i in list_source:
+        if judge_source == i:
+            # print('原创文章：' + url_page)
+            if source_article:
+                source_article = source_article.group()
+                # 获取文章中所有的图片url链接: http://www.bio360.net/storage/image/2018/08/FG3XNGQGmD2HxBMqFgNNmiuLNXjTWHU9cnblI8TV.png
+                pattern_img = re.compile(r'<img(.*?)\ssrc="(.*?)"', re.I)
+                findall_img = pattern_img.findall(source_article)
+                # print('findall_img:', type(findall_img), findall_img)
+
+                # judge_img_get:判断能否获取图片
+                judge_img_get = True
+                for kw in findall_img:
+                    # kw[1]: http://www.bio360.net/storage/image/2018/08/FG3XNGQGmD2HxBMqFgNNmiuLNXjTWHU9cnblI8TV.png
+                    # 判断图片URL是否需要组合
+                    # print('kw[1]',kw[1])
+                    pattern_judge_img = re.compile(r'http', re.I)
+                    judge_img = pattern_judge_img.search(kw[1])
+                    if judge_img:
+                        url_full_img = kw[1]
+                    else:
+                        # 图片网址:url_full_img: http://www.bio360.net/storage/image/2018/08/FG3XNGQGmD2HxBMqFgNNmiuLNXjTWHU9cnblI8TV.png
+                        url_full_img =  'http://www.bio360.net' + kw[1]
+                        # 图片保存名：dwNNY7cwzRcOcsjRwMFcceLF9qTvhyDP8HiHTgQc.png
+                    url_full_img = url_full_img.replace('&#10;','')
+                    # print('url_full_img:', type(url_full_img), url_full_img)
+                    pattern_name_save_img = re.compile(r'.*\/(.*\.[jpbg][pmin]\w+)', re.I)
+                    try:
+                        name_save_img = pattern_name_save_img.search(kw[1]).group(1).replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
+                        # print('name_save_img:', type(name_save_img), name_save_img)
+                        # 获取图片
+                        response_img = requests.get(url_full_img, headers = headers).content
+                        # 保存图片
+                        save_img(response_img, name_save_img)
+                    except:
+                        print('图片网址有误:' + '\n' + url_full_img)
+                        # 如果图片获取不到，则赋值为false
+                        judge_img_get = False
+                        break
+
+                # 如果获取得到图片，再进行下一步
+                if judge_img_get:
+                    # 提取url中的154727作为文件名保存: http://www.bio360.net/article/154727
+                    pattren_filename = re.compile(r'.*\/(.*)?', re.I)
+                    filename = pattren_filename.search(url_page).group(1) + '.xml'
+                    filename = filename.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
+                    # print('filename.group(1):', type(filename.group(1)), filename.group(1))
+
+                    # 解析文章，提取有用的内容，剔除不需要的，返回内容列表
+                    list_article = parse_page(source_article)
+                    # 保存文章内容 
+                    save_page(list_article, filename)
+                else:
+                    print('获取不到图片：' + url_page)
             else:
-                # 图片网址:url_full_img: http://www.bio360.net/storage/image/2018/08/FG3XNGQGmD2HxBMqFgNNmiuLNXjTWHU9cnblI8TV.png
-                url_full_img =  'http://www.bio360.net' + kw[1]
-                # 图片保存名：dwNNY7cwzRcOcsjRwMFcceLF9qTvhyDP8HiHTgQc.png
-            url_full_img = url_full_img.replace('&#10;','')
-            # print('url_full_img:', type(url_full_img), url_full_img)
-            pattern_name_save_img = re.compile(r'.*\/(.*\.[jpbg][pmin]\w+)', re.I)
-            try:
-                name_save_img = pattern_name_save_img.search(kw[1]).group(1).replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
-                # print('name_save_img:', type(name_save_img), name_save_img)
-                # 获取图片
-                response_img = requests.get(url_full_img, headers = headers).content
-                # 保存图片
-                save_img(response_img, name_save_img)
-            except:
-                print('图片网址有误:' + '\n' + url_full_img + '\n' + url_page)
-
-        
-        # 提取url中的154727作为文件名保存: http://www.bio360.net/article/154727
-        pattren_filename = re.compile(r'.*\/(.*)?', re.I)
-        filename = pattren_filename.search(url_page).group(1) + '.xml'
-        filename = filename.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
-        # print('filename.group(1):', type(filename.group(1)), filename.group(1))
-
-        # 解析文章，提取有用的内容，剔除不需要的，返回内容列表
-        list_article = parse_page(source_article)
-        # 保存文章内容 
-        save_page(list_article, filename)
-
-    else:
-        print('get_page_error:' + url_page)
+                print('get_page_error:' + url_page)
 
 def parse_page(source_local):
     """
