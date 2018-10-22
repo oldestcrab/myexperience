@@ -156,7 +156,7 @@ def parse_page(source_local):
     # source_article = html_source_local.xpath('//td[@valign = "top" and @height = "374"]/table/tbody/tr/td/table[2]/tbody/tr[2]/td')[0].text
     pattren_article_time = re.compile(r'<td>.*?(\d\d\d\d-\d\d-\d\d).*?</td>', re.I|re.S)
     source_time = pattren_article_time.search(source_local).group(1)
-    source_article = '<source>' + '<source>' + '<b />' + 'www.cern.ac.cn' + '</source>' + '<user>'  + '</user>' + '<time>' + source_time + '</time>' + '</source>\n'
+    source_article = '<source>' + '<source>'  + '</source>' + '<user>'  + '</user>' + '<time>' + source_time + '</time>' + '</source>\n'
     list_article.append(source_article)
     # print(type(source_time),source_time)
 
@@ -233,7 +233,7 @@ def save_img(source, filename):
         with open(dir_save_img + filename, 'wb') as f:
             f.write(source)  
     except OSError as e:
-        print('图片保存失败：' + name_save_img +'\n{e}'.format(e = e))
+        print('图片保存失败：' + filename + '\n{e}'.format(e = e))
 
 def save_page(list_article,filename):
     """
