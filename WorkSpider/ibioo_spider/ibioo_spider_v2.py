@@ -82,47 +82,63 @@ def get_page(url_page):
     pattren_article = re.compile(r'<div class="article-body">.*<div class="article-extra clearfix">', re.I|re.S)
     source_article = pattren_article.search(response_article.text)
     # print(source_article.group)
-    if source_article:
-        source_article = source_article.group()
-        # 获取文章中所有的图片url链接: http://www.bio360.net/storage/image/2018/08/FG3XNGQGmD2HxBMqFgNNmiuLNXjTWHU9cnblI8TV.png
-        pattern_img = re.compile(r'<img(.*?)\ssrc="(.*?)"', re.I)
-        findall_img = pattern_img.findall(source_article)
-        for kw in findall_img:
-            # kw[1]: http://www.bio360.net/storage/image/2018/08/FG3XNGQGmD2HxBMqFgNNmiuLNXjTWHU9cnblI8TV.png
-                # 判断图片URL是否需要组合
-                pattern_judge_img = re.compile(r'http', re.I)
-                judge_img = pattern_judge_img.search(kw[1])
-                if judge_img:
-                    url_full_img = kw[1]
-                else:
-                    url_full_img =  'http://www.ibioo.com' + kw[1]
 
-                # 图片保存名：dwNNY7cwzRcOcsjRwMFcceLF9qTvhyDP8HiHTgQc.png
-                pattern_name_save_img = re.compile(r'.*\/(.*\.[jpbg][pmin]\w+)', re.I)
-                try:
-                    name_save_img = pattern_name_save_img.search(kw[1]).group(1).replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
-                    # 获取图片
-                    response_img = requests.get(url_full_img, headers = headers).content
+    list_source = ['Science']
+    # 判断文章是原创还是转载，如果是原创则进行爬取
+    html_source_local = etree.HTML(response_article.text) 
+    judge_source = html_source_local.xpath('//span[@class="source"]/text()')[0]
+    print(judge_source)
+    for i in list_source:
+        if judge_source == i:
+            print('原创文章：' + url_article)
+            if source_article:
+                source_article = source_article.group()
+                # 获取文章中所有的图片url链接: http://www.bio360.net/storage/image/2018/08/FG3XNGQGmD2HxBMqFgNNmiuLNXjTWHU9cnblI8TV.png
+                pattern_img = re.compile(r'<img(.*?)\ssrc="(.*?)"', re.I)
+                findall_img = pattern_img.findall(source_article)
 
-                    # 保存图片
-                    save_img(response_img, name_save_img)
+                # judge_img_get:判断能否获取图片
+                judge_img_get = True
+                for kw in findall_img:
+                    # kw[1]: http://www.bio360.net/storage/image/2018/08/FG3XNGQGmD2HxBMqFgNNmiuLNXjTWHU9cnblI8TV.png
+                    # 判断图片URL是否需要组合
+                    pattern_judge_img = re.compile(r'http', re.I)
+                    judge_img = pattern_judge_img.search(kw[1])
+                    if judge_img:
+                        url_full_img = kw[1]
+                    else:
+                        url_full_img =  'http://www.ibioo.com' + kw[1]
+    
+                    # 图片保存名：dwNNY7cwzRcOcsjRwMFcceLF9qTvhyDP8HiHTgQc.png
+                    pattern_name_save_img = re.compile(r'.*\/(.*\.[jpbg][pmin]\w+)', re.I)
+                    try:
+                        name_save_img = pattern_name_save_img.search(kw[1]).group(1).replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
+                        # 获取图片
+                        response_img = requests.get(url_full_img, headers = headers).content
+    
+                        # 保存图片
+                        save_img(response_img, name_save_img)
+                    except:
+                        print('图片网址有误:' + '\n' + url_full_img)
+                        # 如果图片获取不到，则赋值为false
+                        judge_img_get = False
+                        break
+                    # 如果获取得到图片，再进行下一步
+                    if judge_img_get:    
+                        # 提取url_page中的20180424_5001331.html作为文件名保存: ./201804/t20180424_5001331.html
+                        pattren_filename = re.compile(r'.*\/(.*).[h]\w+', re.I)
+                        filename = pattren_filename.search(url_page).group(1) + '.xml'
+                        filename = filename.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
+                        # print(filename)
 
-                except:
-                    print('图片网址有误:' + '\n' + url_full_img + '\n' + url_article)
-
-        # 提取url_page中的20180424_5001331.html作为文件名保存: ./201804/t20180424_5001331.html
-        pattren_filename = re.compile(r'.*\/(.*).[h]\w+', re.I)
-        filename = pattren_filename.search(url_page).group(1) + '.xml'
-        filename = filename.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
-        print(filename)
-
-        # 解析文章，提取有用的内容，剔除不需要的，返回内容列表
-        list_article = parse_page(source_article)
-        # 保存文章内容 
-        save_page(list_article, filename)
-
-    else:
-        print('get_page_error:' + url_article)
+                        # 解析文章，提取有用的内容，剔除不需要的，返回内容列表
+                        list_article = parse_page(source_article)
+                        # 保存文章内容 
+                        save_page(list_article, filename)
+                    else:
+                        print('获取不到图片：' + url_article)
+            else:
+                print('get_page_error:' + url_article)
 
 def parse_page(source_local):
     """
@@ -141,11 +157,17 @@ def parse_page(source_local):
     title_article = html_source_local.xpath('//div[@class="article-body"]/h1')[0].text
     title_article = '<title>' + title_article + '</title>\n'
     list_article.append(title_article)
-    print(type(title_article),title_article)
+    # print(type(title_article),title_article)
 
     # source_article：来源： 中科普瑞 / 作者：  2018-09-11
-    source_article = html_source_local.xpath('//div[@id = "date"]')[0].text
-    source_article = '<source>' + source_article + '</source>\n'
+
+    result_source = html_source_local.xpath('//span[@class="source"]/text()')[0]
+    print(result_source)
+    result_time = html_source_local.xpath('//span[@class="time"]/text()')[0]
+    print(result_time)
+    result_user = html_source_local.xpath('//span[@class="user"]/text()')[0]
+    print(result_user)
+    source_article = '<source>' + '<source>' + result_source + '</source>' + '<user>' + result_user + '</user>' + '<time>' + result_time + '</time>' + '</source>\n'
     list_article.append(source_article)
     # print(type(source_article),source_article)
 
