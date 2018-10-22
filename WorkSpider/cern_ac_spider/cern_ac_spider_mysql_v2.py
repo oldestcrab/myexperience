@@ -88,6 +88,8 @@ def get_page(url):
         pattern_img = re.compile(r'<img(.*?)\ssrc="(.*?)"', re.I)
         findall_img = pattern_img.findall(source_article)
 
+        # judge_img_get:判断能否获取图片
+        judge_img_get = True
         for kw in findall_img:
             # 判断图片URL是否需要组合
             pattern_judge_img = re.compile(r'http', re.I)
@@ -109,18 +111,25 @@ def get_page(url):
                 save_img(response_img, name_save_img)
 
             except:
-                print('图片网址有误:' + '\n' + url_full_img + '\n' + url_page)
+                print('图片网址有误:' + '\n' + url_full_img)
+                # 如果图片获取不到，则赋值为false
+                judge_img_get = False
+                break
+                
+        # 如果获取得到图片，再进行下一步
+        if judge_img_get:
+            # 提取url中的12399作为文件名保存: detail.asp?channelid1=110100&id=12399
+            pattren_filename = re.compile(r'id=(.*)')
+            filename = pattren_filename.search(url).group(1) + '.xml'
+            filename = filename.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
 
-        # 提取url中的12399作为文件名保存: detail.asp?channelid1=110100&id=12399
-        pattren_filename = re.compile(r'id=(.*)')
-        filename = pattren_filename.search(url).group(1) + '.xml'
-        filename = filename.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
-
-        # 解析文章，提取有用的内容，剔除不需要的，返回内容列表
-        list_article = parse_page(source_article)
-        # 保存文章内容 
-        save_page(list_article, filename)
-        save_mysql(url_full, filename)
+            # 解析文章，提取有用的内容，剔除不需要的，返回内容列表
+            list_article = parse_page(source_article)
+            # 保存文章内容 
+            save_page(list_article, filename)
+            save_mysql(url_full, filename)
+        else:
+            print('获取不到图片：' + url_full)
     else:
         print('error:' + url_full)
 

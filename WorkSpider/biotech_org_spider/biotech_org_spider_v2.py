@@ -74,6 +74,8 @@ def get_page(url):
         # 获取文章中所有的图片url链接:'http://159.226.80.12:80/imnews/NewsDataAction?Index=showImg&file=20180808141922.jpg'
         pattern_img = re.compile(r'<img(.*?)\ssrc="(.*?)"', re.I)
         findall_img = pattern_img.findall(article_source)
+        # judge_img_get:判断能否获取图片
+        judge_img_get = True
         for kw in findall_img:
             # kw[1]: http://www.bio360.net/storage/image/2018/08/FG3XNGQGmD2HxBMqFgNNmiuLNXjTWHU9cnblI8TV.png
             # 判断图片URL是否需要组合
@@ -95,18 +97,25 @@ def get_page(url):
                 save_img(response_img, name_save_img)
 
             except:
-                print('图片网址有误:' + '\n' + url_full_img + '\n' + full_url)
+                print('图片网址有误:' + '\n' + url_full_img)
+                # 如果图片获取不到，则赋值为false
+                judge_img_get = False
+                break
 
-        # 提取url中的数字作为文件名保存:'/information/155535'|155535
-        filename_pattren = re.compile(r'\d+')
-        filename = filename_pattren.search(url).group() + '.xml'
-        filename = filename.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
-        # print(filename)     
+        # 如果获取得到图片，再进行下一步
+        if judge_img_get:
+            # 提取url中的数字作为文件名保存:'/information/155535'|155535
+            filename_pattren = re.compile(r'\d+')
+            filename = filename_pattren.search(url).group() + '.xml'
+            filename = filename.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
+            # print(filename)     
 
-        # 解析文章，提取有用的内容，剔除不需要的，返回内容列表
-        list_article = parse_page(article_source)
-        # 保存文章内容 
-        save_page(list_article, filename)
+            # 解析文章，提取有用的内容，剔除不需要的，返回内容列表
+            list_article = parse_page(article_source)
+            # 保存文章内容 
+            save_page(list_article, filename)
+        else:
+            print('获取不到图片：' + url_page)
 
     else:
         print('get_page_error:' + full_url)
