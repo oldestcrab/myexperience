@@ -10,6 +10,7 @@ import random
 import os
 import pymysql
 
+
 def index_page(page, judge_last_time, judge_name, url_kw):
     """
     爬取索引页
@@ -95,7 +96,7 @@ def get_page(url_page):
     result_source = html_source_local.xpath('//div[@class="item-time col-sm-8"]')[0].text
     pattern_search_source = re.compile(r'来源：(.*?)/{1}')
     judge_source = pattern_search_source.search(result_source).group(1).strip()
-    # print(judge_source)
+    # print(type(judge_source))
     for i in list_source:
         if judge_source == i:
             # print('原创文章：' + url_page)
@@ -140,7 +141,7 @@ def get_page(url_page):
                 if judge_img_get:
                     # 提取url中的154727作为文件名保存: http://www.bio360.net/article/154727
                     pattren_filename = re.compile(r'.*\/(.*)?', re.I)
-                    filename = pattren_filename.search(url_page).group(1) + '.xml'
+                    filename = pattren_filename.search(url_page).group(1) + '.html'
                     filename = filename.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
                     # print('filename.group(1):', type(filename.group(1)), filename.group(1))
 
@@ -154,7 +155,6 @@ def get_page(url_page):
             else:
                 print('get_page_error:' + url_page)
 
-        
 def parse_page(source_local):
     """
     提取文章内容
@@ -162,7 +162,7 @@ def parse_page(source_local):
     """
     # 需要的内容保存到列表里，写入为.xml文件
     list_article = []
-    list_article.append('<Document>')
+    list_article.append('<!DOCTYPE html>\n' + '<html>\n' + '<head>\n' + '<meta charset="utf-8"/>\n')
 
     # 利用etree.HTML，将字符串解析为HTML文档
     html_source_local = etree.HTML(source_local) 
@@ -170,7 +170,7 @@ def parse_page(source_local):
 
     # title_article: 第四届发育和疾病的表观遗传学上海国际研讨会在沪隆重开幕
     title_article = html_source_local.xpath('//h1')[0].text
-    title_article = '<title>' + title_article + '</title>\n'
+    title_article = '<title>' + title_article + '</title>\n' + '</head>\n'
     list_article.append(title_article)
     # print(type(title_article),title_article)
 
@@ -182,7 +182,7 @@ def parse_page(source_local):
     result_time = pattern_search_time.search(source_article).group().strip()
     pattern_search_user_ = re.compile(r'作者：(.*?)\d\d\d\d-\d\d-\d\d')
     result_user = pattern_search_user_.search(source_article).group(1).replace('/','').replace('时间：','').strip()
-    source_article = '<source>' + '<source>' + result_source + '</source>' + '<user>' + result_user + '</user>' + '<time>' + result_time + '</time>' + '</source>\n'
+    source_article = '<body>\n' + '<div class = "source">' + result_source + '</div>\n' + '<div class = "user">' + result_user + '</div>\n' + '<div class = "time">' + result_time + '</div>\n' + '<content>\n'
     list_article.append(source_article)
     # print(type(source_article),source_article)
 
@@ -214,7 +214,7 @@ def parse_page(source_local):
         # 匹配文章内容中的图片url，替换为本地图片url
         pattren_img_local = re.compile(r'<img.*?\ssrc="(.*?)".*?>{1}', re.I|re.S)
         source_local = pattren_img_local.sub(url_img_name, source_article)
-
+        # print(source_local)
         # 剔除不需要的内容
         def article_change(match):
             """
@@ -222,22 +222,30 @@ def parse_page(source_local):
             """
             # <p src="./img/13SsuHuXECVJ<p style="text-align: center;"> p
             # print(match.group(),match.group(1))
-            name_tag = '<' + match.group(1) + '>'
+            name_tag = ''
             return name_tag
 
-        pattren_article_change = re.compile(r'<([^aip]\w*)\s*.*?>{1}')
+        pattren_article_change = re.compile(r'<([^/aip]).*?>{1}', re.I)
         source_local = pattren_article_change.sub(article_change, source_local)
 
-        pattren_article_change_1 = re.compile(r'</[^p].*?>{1}')
+
+        pattren_article_change_1 = re.compile(r'</[^ap].*?>{1}')
         source_local = pattren_article_change_1.sub('', source_local)
+        # print(source_local)
+        # 剔除<P>标签的样式
+        pattren_article_change_2 = re.compile(r'<p.*?>{1}', re.I)
+        source_local = pattren_article_change_2.sub('<p>', source_local)
+
 
         # source_local = source_local.replace('</blockquote>','').replace('<blockquote>','').replace('style="background-color: rgb(255, 255, 255);"','').replace('align="center" style="text-align: center;"','').replace('<div>','').replace('</div>','').replace('<div class="article-content">','').replace('<div class="statement"','').replace('<div style="text-align: center;">','').strip().replace('&','&amp;').replace('style="text-align: center; "','').replace('style="font-size: 14px;"','').replace('style="text-align: left;"','')
-        source_local = source_local.replace('</blockquote>','').replace('<blockquote>','').replace('<div>','').replace('</div>','').replace('<div class="article-content">','').replace('<div class="statement"','').replace('<div style="text-align: center;">','').strip().replace('&','&amp;')
+        source_local = source_local.replace('</blockquote>','').replace('<d>','').replace('<t>','').replace('<blockquote>','').replace('<div>','').replace('</div>','').replace('<div class="article-content">','').replace('<div class="statement"','').replace('<div style="text-align: center;">','').replace('&','&amp;').replace('<h>','').replace('<s>','').strip()
+        # print(source_local)
 
         # 清洗后的正文
-        source_local = '<content>\n' + source_local + '</content>\n'
+        # print(source_local)
+        source_local = source_local + '\n</content>\n' + '</body>\n' + '</html>\n'
         list_article.append(source_local)
-        list_article.append('</Document>')
+        
 
     return list_article
 
@@ -248,7 +256,7 @@ def save_img(source, filename):
     :param source: 图片文件
     :param filename: 保存的图片名
     """
-    dir_save_img= '/home/bmnars/data/bio360_spider_result_v2/img/'
+    dir_save_img= '/home/bmnars/data/bio360_spider_result_v2/'
     if not os.path.exists(dir_save_img):
         os.makedirs(dir_save_img)
     try:
@@ -290,7 +298,7 @@ def save_mysql(url_source, url_local):
         'source':'www.bio360.net',
 	    'update_time':update_time
     }
-    table = '_cs_bmnars_link_xml'
+    table = '_cs_bmnars_link_v2'
     keys = ','.join(data.keys())
     values = ','.join(['%s']*len(data))
     sql = 'INSERT INTO {table}({keys}) VALUES ({values}) on duplicate key update '.format(table=table, keys=keys, values=values)
