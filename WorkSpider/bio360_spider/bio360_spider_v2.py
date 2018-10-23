@@ -95,7 +95,7 @@ def get_page(url_page):
     result_source = html_source_local.xpath('//div[@class="item-time col-sm-8"]')[0].text
     pattern_search_source = re.compile(r'来源：(.*?)/{1}')
     judge_source = pattern_search_source.search(result_source).group(1).strip()
-    # print(judge_source)
+    # print(type(judge_source))
     for i in list_source:
         if judge_source == i:
             # print('原创文章：' + url_page)
