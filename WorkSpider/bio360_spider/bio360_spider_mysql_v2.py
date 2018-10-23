@@ -256,7 +256,7 @@ def save_img(source, filename):
     :param source: 图片文件
     :param filename: 保存的图片名
     """
-    dir_save_img= '/home/bmnars/data/bio360_spider_result_v2/'
+    dir_save_img= '/home/bmnars/data/bio360_spider_result_v2/img'
     if not os.path.exists(dir_save_img):
         os.makedirs(dir_save_img)
     try:
