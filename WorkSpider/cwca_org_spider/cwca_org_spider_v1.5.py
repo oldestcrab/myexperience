@@ -81,7 +81,7 @@ def get_page(url):
 
         # 提取url中的ff80808161da671a0163d9a89daa03b7.html作为文件名保存:'/news/tidings/ff80808161da671a0163d9a89daa03b7.html'
         filename_pattren = re.compile(r'/tidings/(.*).html')
-        filename = filename_pattren.search(url).group(1) + '.html'
+        filename = filename_pattren.search(url).group(1) + '.xml'
         filename = filename.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
 
         # print(filename)
@@ -140,7 +140,7 @@ def parse_page(source_local):
     """
     # 需要的内容保存到列表里，写入为.xml文件
     list_article = []
-    list_article.append('<!DOCTYPE html>\n' + '<html>\n' + '<head>\n' + '<meta charset="utf-8"/>\n')
+    list_article.append('<Document>')
 
     # 利用etree.HTML，将字符串解析为HTML文档
     html_source_local = etree.HTML(source_local) 
@@ -148,7 +148,7 @@ def parse_page(source_local):
 
     # title_article: 第四届发育和疾病的表观遗传学上海国际研讨会在沪隆重开幕
     title_article = html_source_local.xpath('//div[@class = "center_title"]')[0].text
-    title_article = '<title>' + title_article + '</title>\n' + '</head>\n'
+    title_article = '<title>' + title_article + '</title>\n'
     list_article.append(title_article)
     # print(type(title_article),title_article)
 
@@ -156,7 +156,7 @@ def parse_page(source_local):
     source_article_time = html_source_local.xpath('//div[@class = "nr"]/span[1]')[0].text.replace('发布日期：','')
     source_article_source = html_source_local.xpath('//div[@class = "nr"]/span[2]')[0].text.replace('来源：','')
     source_article_user = html_source_local.xpath('//div[@class = "nr"]/span[3]')[0].text.replace('作者：','')
-    source_article = '<body>\n' + '<div class = "source">' + source_article_source + '</div>\n' + '<div class = "user">' + source_article_user + '</div>\n' + '<div class = "time">' + source_article_time + '</div>\n' + '<content>\n'    
+    source_article = '<source>' + '<source>' + source_article_source + '</source>' + '<user>' + source_article_user + '</user>' + '<time>' + source_article_time + '</time>' + '</source>\n'
     list_article.append(source_article)
     # print(type(source_article),source_article)
 
@@ -201,7 +201,7 @@ def parse_page(source_local):
     source_local = pattren_article_change.sub(article_change, source_local)
 
     # 剔除所有除</p>外的</>标签
-    pattren_article_change_1 = re.compile(r'</[^ap].*?>{1}', re.I)
+    pattren_article_change_1 = re.compile(r'</[^p].*?>{1}', re.I)
     source_local = pattren_article_change_1.sub('', source_local)
 
     # 剔除<P>标签的样式
@@ -213,8 +213,9 @@ def parse_page(source_local):
 
     # 清洗后的正文
     # print(source_local)
-    source_local = source_local + '\n</content>\n' + '</body>\n' + '</html>\n'
+    source_local = '<content>\n' + source_local + '</content>\n'
     list_article.append(source_local)
+    list_article.append('</Document>')
 
     return list_article
 
