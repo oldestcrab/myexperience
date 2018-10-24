@@ -7,8 +7,6 @@ from lxml import etree
 from requests import ConnectionError
 import sys
 import os
-import pymysql
-
 
 
 def index_page(page, judge, judge_name, url_kw):
@@ -120,14 +118,13 @@ def get_page(url):
         if judge_img_get:
             # 提取url中的12399作为文件名保存: detail.asp?channelid1=110100&id=12399
             pattren_filename = re.compile(r'id=(.*)')
-            filename = pattren_filename.search(url).group(1) + '.html'
+            filename = pattren_filename.search(url).group(1) + '.xml'
             filename = filename.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
 
             # 解析文章，提取有用的内容，剔除不需要的，返回内容列表
             list_article = parse_page(source_article)
             # 保存文章内容 
             save_page(list_article, filename)
-            save_mysql(url_full, filename)
         else:
             print('获取不到图片：' + url_full)
     else:
@@ -140,7 +137,7 @@ def parse_page(source_local):
     """
     # 需要的内容保存到列表里，写入为.xml文件
     list_article = []
-    list_article.append('<!DOCTYPE html>\n' + '<html>\n' + '<head>\n' + '<meta charset="utf-8"/>\n')
+    list_article.append('<Document>')
 
     # 利用etree.HTML，将字符串解析为HTML文档
     html_source_local = etree.HTML(source_local) 
@@ -148,7 +145,7 @@ def parse_page(source_local):
 
     # title_article: 第四届发育和疾病的表观遗传学上海国际研讨会在沪隆重开幕
     title_article = html_source_local.xpath('//td[@class = "content_title"]')[0].text
-    title_article = '<title>' + title_article + '</title>\n' + '</head>\n'
+    title_article = '<title>' + title_article + '</title>\n'
     list_article.append(title_article)
     # print(type(title_article),title_article)
 
@@ -156,7 +153,7 @@ def parse_page(source_local):
     # source_article = html_source_local.xpath('//td[@valign = "top" and @height = "374"]/table/tbody/tr/td/table[2]/tbody/tr[2]/td')[0].text
     pattren_article_time = re.compile(r'<td>.*?(\d\d\d\d-\d\d-\d\d).*?</td>', re.I|re.S)
     source_time = pattren_article_time.search(source_local).group(1)
-    source_article = '<body>\n' + '<div class = "source">'  + '</div>\n' + '<div class = "user">'  + '</div>\n' + '<div class = "time">' + source_time + '</div>\n' + '<content>\n'
+    source_article = '<source>' + '<source>'  + '</source>' + '<user>'  + '</user>' + '<time>' + source_time + '</time>' + '</source>\n'
     list_article.append(source_article)
     # print(type(source_time),source_time)
 
@@ -180,7 +177,7 @@ def parse_page(source_local):
         if img_real_name and match.group(1):
             pattern_kw_name_save_img = re.compile(r'.*\/(.*\.[jpbg][pmin]\w+)', re.I)
             kw_img_name = pattern_kw_name_save_img.search(match.group(1)).group(1).replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
-            img_name = '<img src="/home/bmnars/data/cern_ac_spider_result_v2/img/' + kw_img_name + '" />'
+            img_name = '<img src="./img/' + kw_img_name + '" />'
             # print('img_name:', type(img_name), img_name)
             return img_name
 
@@ -202,7 +199,7 @@ def parse_page(source_local):
     source_local = pattren_article_change.sub(article_change, source_local)
     # print(source_local)
     # 剔除所有除</p>外的</>标签
-    pattren_article_change_1 = re.compile(r'</[^pa].*?>{1}', re.I)
+    pattren_article_change_1 = re.compile(r'</[^p].*?>{1}', re.I)
     source_local = pattren_article_change_1.sub('', source_local)
 
     # 剔除<P>标签的样式
@@ -210,12 +207,13 @@ def parse_page(source_local):
     source_local = pattren_article_change_2.sub('<P>', source_local)
 
     # 剔除一些杂乱的样式
-    source_local = source_local.replace('&nbsp;','').replace('&','&amp;').strip()
+    source_local = source_local.replace('&nbsp;','').strip().replace('&','&amp;')
 
     # 清洗后的正文
     # print(source_local)
-    source_local = source_local + '\n</content>\n' + '</body>\n' + '</html>\n'
+    source_local = '<content>\n' + source_local + '</content>\n'
     list_article.append(source_local)
+    list_article.append('</Document>')
 
     return list_article
 
@@ -225,7 +223,7 @@ def save_img(source, filename):
     :param source: 图片文件
     :param filename: 保存的图片名
     """
-    dir_save_img= '/home/bmnars/data/cern_ac_spider_result_v2/img/'
+    dir_save_img= sys.path[0] + '/cern_ac_spider_result/img/'
     if not os.path.exists(dir_save_img):
         os.makedirs(dir_save_img)
     try:
@@ -241,7 +239,7 @@ def save_page(list_article,filename):
     :param list_article: 结果
     :param filename: 保存的文件名
     """
-    dir_save_page = '/home/bmnars/data/cern_ac_spider_result_v2/'
+    dir_save_page = sys.path[0] + '/cern_ac_spider_result/'
     if not os.path.exists(dir_save_page):
         os.makedirs(dir_save_page)
     try:
@@ -250,40 +248,6 @@ def save_page(list_article,filename):
                 f.write(i)
     except  OSError as e:
         print('内容保存失败：' + filename + '\n{e}'.format(e = e))
-
-def save_mysql(url_source, url_local):
-    """
-    保存到文件
-    :param url_source: 文章来源url
-    :param url_local: 文章本地url
-    """
-    db = pymysql.connect(host='localhost', user='bmnars', password='vi93nwYV', port=3306, db='bmnars')
-    cursor = db.cursor()
-    url_local_full = '/home/bmnars/data/cern_ac_spider_result_v2/' + url_local  
-    update_time = time.strftime('%Y-%m-%d',time.localtime())
-    data = {
-        'source_url':url_source,
-        'local_url':url_local_full,
-        'source':'www.cern.ac.cn',
-	    'update_time':update_time
-    }
-    table = '_cs_bmnars_link_v2'
-    keys = ','.join(data.keys())
-    values = ','.join(['%s']*len(data))
-    sql = 'INSERT INTO {table}({keys}) VALUES ({values}) on duplicate key update '.format(table=table, keys=keys, values=values)
-    update = ', '.join(['{key} = %s'.format(key=key) for key in data]) + ';'
-    sql += update
-    # print(sql)
-    try:
-        if cursor.execute(sql,tuple(data.values())*2):
-            db.commit()
-    except:
-        print("save_mysql_failed:" + url_source)
-        db.rollback()
-    
-    finally:
-        cursor.close()      
-        db.close()
 
 def main():
     """
@@ -302,9 +266,9 @@ def main():
     if not os.path.exists(dir_judge):
         with open(dir_judge, 'w', encoding = 'utf-8'):
             print('创建文件：' + dir_judge)
-    with open(dir_judge, 'r', encoding = 'utf-8') as f:
-        judge = f.read()
-    # judge = 1
+    # with open(dir_judge, 'r', encoding = 'utf-8') as f:
+        # judge = f.read()
+    judge = 1
     index_page(num, judge, judge_name, url_kw)
 
     print("cern_ac_spider爬取完毕，脚本退出！")

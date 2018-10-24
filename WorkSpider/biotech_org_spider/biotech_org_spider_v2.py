@@ -192,7 +192,7 @@ def parse_page(source_local):
         pattren_article_change = re.compile(r'<([^/aip]\w*)\s*.*?>{1}')
         source_local = pattren_article_change.sub(article_change, source_local)
 
-        pattren_article_change_1 = re.compile(r'</[^p].*?>{1}')
+        pattren_article_change_1 = re.compile(r'</[^pa].*?>{1}')
         source_local = pattren_article_change_1.sub('', source_local)
 
         pattren_article_change_2 = re.compile(r'<p.*?>{1}')
