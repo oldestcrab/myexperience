@@ -142,9 +142,9 @@ def main():
     遍历每一页索引页
     """
     # 读取上次爬取时保存的用于判断爬取位置的字符串
-    with open(sys.path[0] + '/judge.txt', 'r', encoding = 'utf-8') as f:
-            judge = f.read()
-
+    # with open(sys.path[0] + '/judge.txt', 'r', encoding = 'utf-8') as f:
+            # judge = f.read()
+    judge = 1
     for i in range(9):
         params = index_page(i, judge)
         print('保存第', str(i+1), '页索引页所有文章成功')  
