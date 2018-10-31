@@ -14,15 +14,15 @@ def get_index_page(page_end):
     :param page_end:页码数
     """
     # dir_judge_start_page : 保存上次最后爬取的页数
-    dir_judge_start_page = sys.path[0] + '/judge_start_page.txt'
+    dir_judge_start_page = sys.path[0] + '/judge_share_start_page.txt'
     if not os.path.exists(dir_judge_start_page):
         with open(dir_judge_start_page, 'w', encoding = 'utf-8') as f:
             f.write('1')
         print('创建文件：' + dir_judge_start_page + ',并赋值page_next_start = 1')
 
     # 如果是新爬取的，True，则起始页为1，否则读取上次爬取时的页数，并作为起始页
-    # config.tumblr_likes_judge_new : True|False
-    if config.tumblr_likes_judge_new:
+    # config.tumblr_share_judge_new : True|False
+    if config.tumblr_share_judge_new:
         page_start = 1
     else:
         with open(dir_judge_start_page, 'r', encoding = 'utf-8') as f:
@@ -35,7 +35,7 @@ def get_index_page(page_end):
         with open(dir_judge_start_page, 'w', encoding = 'utf-8') as f:
             f.write(str(i))
         # url : https://oldestcrab.tumblr.com/likes/page/1
-        url = 'https://' + config.tumblr_likes_username + '.tumblr.com/likes/page/' + str(i)
+        url = 'https://' + config.tumblr_share_username + '.tumblr.com/page/' + str(i)
         print(url)
         with open(sys.path[0] + '/user-agents.txt', 'r', encoding = 'utf-8') as f:
             list_user_agents = f.readlines()
@@ -194,7 +194,7 @@ def main():
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
 
     # config.tumblr_likes_page : 爬取总页数    
-    get_index_page(config.tumblr_likes_page)
+    get_index_page(config.tumblr_share_page)
 
     print('tumblr_likes_spider爬取结束！')
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
