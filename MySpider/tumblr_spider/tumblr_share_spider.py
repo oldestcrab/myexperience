@@ -13,9 +13,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
-def login_page(browser):
+def browser_page_login(browser):
     """
     用于网站登录
+    :param browser:浏览器对象
     """
 
 
@@ -44,21 +45,26 @@ def login_page(browser):
         # 点击登录
         submit_login.click()
         # print(browser.page_source)
+        
+        # 返回浏览器对象
         return browser
 
     except TimeoutException:
         print('login page loading time out!')
-        login_page(browser)
+        browser_page_login(browser)
 
-def page_likes(page, browser):
+def browser_page_likes(page, browser):
     """
     获取用户喜欢页面
+    :param page:当前页数
+    :param browser:浏览器对象
     """
-    
+    # https://www.tumblr.com/likes/page/1
     url_likes = 'https://www.tumblr.com/likes/page/' + str(page)
     print(url_likes)
     browser.get(url_likes)
 
+    # 返回喜欢页源码
     return browser.page_source
 
 def get_index_page(page_end, browser_next):
@@ -90,77 +96,98 @@ def get_index_page(page_end, browser_next):
             f.write(str(i))
 
 
-        response_index = page_likes(i, browser_next)
+        response_index = browser_page_likes(i, browser_next)
         # print(type(response_index))
         # with open(sys.path[0] + '/1.html', 'w', encoding = 'utf-8') as f:
         #     f.write(response_index)
         html_iframe = etree.HTML(response_index)
 
         try:
-            list_source_1 = html_iframe.xpath('//div[@class="post_media"]//video/source')
+            # list_video_source_1 = html_iframe.xpath('//div[@class="post_media"]//video/source')
+            # 获取用户自己发布的视频
+            list_video_source_1 = html_iframe.xpath('//div[@class="post_content_inner clearfix"]')
             
         except:
-            print('get list_source_1 error!')
-            list_source_1 = []
+            print('get list_video_source_1 error!')
+            list_video_source_1 = []
 
         # try:
-            # list_source_2 = html_iframe.xpath('//div[@class="reblog-list"]')
-            list_source_2 = html_iframe.xpath('//div[@class="reblog-list"]')
+            # list_video_source_2 = html_iframe.xpath('//div[@class="reblog-list"]')
+            # list_video_source_2 = html_iframe.xpath('//div[@class="reblog-list"]')
             # 
         # except:
-            # print('get list_source_2 error!')
-            # list_source_2 = []
-        print(list_source_1)
-        if list_source_1:
-            for i in list_source_1:
-                get_video_page_1(i)
-        # print(list_source_2)
-        # if list_source_2:
-            # for i in list_source_2:
-                # get_video_page_2(i)
+            # print('get list_video_source_2 error!')
+            # list_video_source_2 = []
+        # print( list_video_source_1)
+        if list_video_source_1:
+            for i in list_video_source_1:
+                get_page_video_post(i)
+        # print(list_video_source_2)
+        # if list_video_source_2:
+            # for i in list_video_source_2:
+                # get_page_video_reblog(i)
 # 
-def get_video_page_1(content_lxml):
+def get_page_video_post(content_lxml):
     """
-    爬取视频页面
+    爬取用户自己发布的视频页面
     :param content_lxml:通过xpath获取的内容
     """
+    # 获取框架页面链接列表
     # url_iframe : https://everythingfox.tumblr.com/video_file/t:TQ_U5i4OlLu9TxRYtxAdzg/179493447941/tumblr_ph9x0xr04g1vmobp0/480
-    url_iframe = content_lxml.xpath('@src')[0]
-    print('url_iframe：' + url_iframe)
-    with open(sys.path[0] + '/user-agents.txt', 'r', encoding = 'utf-8') as f:
-        list_user_agents = f.readlines()
-        user_agent = random.choice(list_user_agents).strip()
-    headers = {'user-agent':user_agent}
-
-    # 获取框架页面
-    try:
-        response_video_page = requests.get(url_iframe, headers = headers)
-    except:
-        print('get video page error:' + url_iframe)
-        response_video_iframe_page = requests.get('https://www.baidu.com', headers = headers)
+    list_url_iframe = content_lxml.xpath('./div[@class="post_media"]//video/source/@src')
     
-        # url_video : https://vf.media.tumblr.com/tumblr_ph9x0xr04g1vmobp0_480.mp4
-        url_video = response_video_page.url
-        print(url_video)
-        pattren_name_video = re.compile(r'.*\/(.*)?', re.I)
-        name_video = pattren_name_video.search(url_video).group(1) 
-        print(name_video)
+    # 视频保存名字
+    list_name_1 = content_lxml.xpath('./div[@class="post_body"]//p/text()')
+    list_name_2 = content_lxml.xpath('./div[@class = "reblog-list-item contributed-content"]//p/text()')
 
-        # html_video = etree.HTML(response_video_iframe.content)
-        # print(html_video)
-        # url_video = html_video.xpath('//source/@src')[0]
-        # print(url_video)
+    # 先确认是否能获取框架页面链接列表，能则继续下一步
+    if list_url_iframe:
+        # 获取框架页面链接
+        url_iframe = list_url_iframe[0]
+        # print('url_iframe：' + url_iframe)
+
+        # 访问该链接，返回的url即为视频真正链接
+        with open(sys.path[0] + '/user-agents.txt', 'r', encoding = 'utf-8') as f:
+            list_user_agents = f.readlines()
+            user_agent = random.choice(list_user_agents).strip()
+        headers = {'user-agent':user_agent}
         try:
-            response_video = requests.get(url_video, headers = headers)
-            response_video.encoding = 'utf-8'
-            time.sleep(1)
+            response_video_page = requests.get(url_iframe, headers = headers)
         except:
-            print('get video page error:' + url_video)
-            response_video = requests.get('https://www.baidu.com', headers = headers)
+            print('get video page error:' + url_iframe)
+            response_video_page = ''
+        
+        # 确认是否访问成功
+        if response_video_page:
+            # 获取视频真正url
+            # url_video : https://vf.media.tumblr.com/tumblr_ph9x0xr04g1vmobp0_480.mp4
+            url_video = response_video_page.url
+            print('url_video:' + url_video)
 
-        save_content(name_video, response_video.content)
+            # 确认视频保存名字：原用户发布内容下文字|转载用户转载内文字|视频链接取最后
+            if list_name_1 and len(list_name_1)<3:
+                name_video = ''.join(list_name_1) + '.mp4'
+            elif list_name_2 and len(list_name_2)<3:
+                name_video = ''.join(list_name_2) + '.mp4'
+            else:
+                pattren_name_video = re.compile(r'.*\/(.*)?', re.I)
+                name_video = pattren_name_video.search(url_video).group(1) 
+            print(name_video)
+            
+            # 获取视频内容
+            try:
+                response_video = requests.get(url_video, headers = headers)
+                response_video.encoding = 'utf-8'
+                # time.sleep(1)
+            except:
+                print('get video page error:' + url_video)
+                response_video = ''
 
-def get_video_page_2(content_lxml):
+            # 如果能够获取视频内容，则保存内容
+            if response_video:
+                save_content_video(name_video, response_video.content)
+
+def get_page_video_reblog(content_lxml):
     """
     爬取视频页面
     :param content_lxml:通过xpath获取的内容
@@ -196,11 +223,11 @@ def get_video_page_2(content_lxml):
             print('get video page error:' + url_video)
             response_video = requests.get('https://www.baidu.com', headers = headers)
 
-        save_content(name_video, response_video.content)
+        save_content_video(name_video, response_video.content)
 
-def save_content(name_video, content_video):
+def save_content_video(name_video, content_video):
     """
-    爬取视频页面
+    保存视频
     :param name_video:视频保存名字
     :param content_video:视频链接
     """   
@@ -208,7 +235,7 @@ def save_content(name_video, content_video):
     if not os.path.exists(dir_save_vedio):
         os.makedirs(dir_save_vedio)
     try:
-        # 保存图片
+        # 保存视频
         with open(dir_save_vedio + name_video, 'wb') as f:
             f.write(content_video)  
     except OSError as e:
@@ -221,7 +248,7 @@ def main():
 
     # 构造一个 WebDriver 对象，调用phantomjs
     browser = webdriver.Chrome()
-    browser_next = login_page(browser)
+    browser_next = browser_page_login(browser)
     # config.tumblr_likes_page : 爬取总页数    
     get_index_page(config.tumblr_share_page, browser_next)
 
