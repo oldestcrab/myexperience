@@ -30,7 +30,7 @@ def browser_page_login(browser):
         # input_username : 用户名输入框
         input_username = browser.find_element_by_xpath('//input[@name="determine_email"]')
         input_username.clear()
-        input_username.send_keys('18819425701@163.com')
+        input_username.send_keys(config.tumblr_user_likes_username)
         # 点击下一步
         submit_next.click()
         # submit_use_password : 使用密码登录按钮|点击使用密码登录
@@ -41,7 +41,7 @@ def browser_page_login(browser):
         # 密码输入框
         input_password = browser.find_element_by_xpath('//div[@class="form_row form_row_password"]/input[@type="password"]')
         # input_password.clear()
-        input_password.send_keys('08015417Qiu')
+        input_password.send_keys(config.tumblr_user_likes_password)
         # 点击登录
         submit_login.click()
         # print(browser.page_source)
@@ -67,11 +67,12 @@ def browser_page_likes(page, browser):
     # 返回喜欢页源码
     return browser.page_source
 
-def get_index_page(page_end, browser_next):
+def get_index_page(browser_next):
     """
     爬取页面
-    :param page_end:页码数
+    :param browser_next:浏览器对象
     """
+    '''
     # dir_judge_start_page : 保存上次最后爬取的页数
     dir_judge_start_page = sys.path[0] + '/judge_share_start_page.txt'
     if not os.path.exists(dir_judge_start_page):
@@ -86,20 +87,17 @@ def get_index_page(page_end, browser_next):
     else:
         with open(dir_judge_start_page, 'r', encoding = 'utf-8') as f:
             page_start = int(f.readline())
-
+    '''
 
     # config.tumblr_likes_username : 爬取用户名
-    for i in range(page_start, page_end):
-        # 保存当前爬取页数
+    for i in range(config.tumblr_user_likes_page_start, config.tumblr_user_likes_page_end):
         print('当前爬取页码数：' + str(i))
-        with open(dir_judge_start_page, 'w', encoding = 'utf-8') as f:
-            f.write(str(i))
+        # 保存当前爬取页数
+        # with open(dir_judge_start_page, 'w', encoding = 'utf-8') as f:
+        #     f.write(str(i))
 
-
+        # 获取浏览器对象返回的网页源码
         response_index = browser_page_likes(i, browser_next)
-        # print(type(response_index))
-        # with open(sys.path[0] + '/1.html', 'w', encoding = 'utf-8') as f:
-        #     f.write(response_index)
         html_iframe = etree.HTML(response_index)
 
         try:
@@ -164,6 +162,9 @@ def get_page_video_post(content_lxml):
             url_video = response_video_page.url
             print('url_video:' + url_video)
 
+            with open(sys.path[0] + '/list_url_video.txt', 'a', encoding = 'utf-8') as f:
+                f.write(url_video + '\n')
+
             # 确认视频保存名字：原用户发布内容下文字|转载用户转载内文字|视频链接取最后
             if list_name_1 and len(list_name_1)<3:
                 name_video = ''.join(list_name_1) + '.mp4'
@@ -171,7 +172,8 @@ def get_page_video_post(content_lxml):
                 name_video = ''.join(list_name_2) + '.mp4'
             else:
                 pattren_name_video = re.compile(r'.*\/(.*)?', re.I)
-                name_video = pattren_name_video.search(url_video).group(1) 
+                name_video = pattren_name_video.search(url_video).group(1)
+            name_video = name_video.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','') 
             print(name_video)
             
             # 获取视频内容
@@ -206,10 +208,10 @@ def get_page_video_reblog(content_lxml):
         else:
             pattren_name_video = re.compile(r'.*\/(.*)?', re.I)
             name_video = pattren_name_video.search(url_video).group(1) 
-
+        name_video = name_video.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','') 
         print(name_video)
         print(url_video)
-        print(type(name_video))
+        # print(type(name_video))
         with open(sys.path[0] + '/user-agents.txt', 'r', encoding = 'utf-8') as f:
             list_user_agents = f.readlines()
             user_agent = random.choice(list_user_agents).strip()
@@ -231,7 +233,7 @@ def save_content_video(name_video, content_video):
     :param name_video:视频保存名字
     :param content_video:视频链接
     """   
-    dir_save_vedio = sys.path[0] + '/'  + config.tumblr_likes_username + '_likes_result/'
+    dir_save_vedio = sys.path[0] + '/user_likes_result/' + config.tumblr_user_likes_username_dir + '/'
     if not os.path.exists(dir_save_vedio):
         os.makedirs(dir_save_vedio)
     try:
@@ -239,7 +241,7 @@ def save_content_video(name_video, content_video):
         with open(dir_save_vedio + name_video, 'wb') as f:
             f.write(content_video)  
     except OSError as e:
-        print('图片保存失败：' + name_video +'\n{e}'.format(e = e))
+        print('视频保存失败：' + name_video +'\n{e}'.format(e = e))
 
 
 def main():
@@ -250,7 +252,7 @@ def main():
     browser = webdriver.Chrome()
     browser_next = browser_page_login(browser)
     # config.tumblr_likes_page : 爬取总页数    
-    get_index_page(config.tumblr_share_page, browser_next)
+    get_index_page(browser_next)
 
     browser.close()
     print('tumblr_likes_spider爬取结束！')
