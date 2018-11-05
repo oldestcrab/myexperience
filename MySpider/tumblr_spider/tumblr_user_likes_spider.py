@@ -63,6 +63,7 @@ def browser_page_likes(page, browser):
     url_likes = 'https://www.tumblr.com/likes/page/' + str(page)
     print(url_likes)
     browser.get(url_likes)
+    browser.implicitly_wait(5)
 
     # 返回喜欢页源码
     return browser.page_source
@@ -101,131 +102,89 @@ def get_index_page(browser_next):
         html_iframe = etree.HTML(response_index)
 
         try:
-            # list_video_source_1 = html_iframe.xpath('//div[@class="post_media"]//video/source')
-            # 获取用户自己发布的视频
-            list_video_source_1 = html_iframe.xpath('//div[@class="post_content_inner clearfix"]')
+            # 获取视频源码
+            list_video_source = html_iframe.xpath('//div[@class="post_content_inner clearfix"]')
             
         except:
-            print('get list_video_source_1 error!')
-            list_video_source_1 = []
+            print('get list_video_source error!')
+            list_video_source = []
+            
+        # 确定能够获取
+        if list_video_source:
+            for i in list_video_source:
+                get_page_video(i)
 
-        # try:
-            # list_video_source_2 = html_iframe.xpath('//div[@class="reblog-list"]')
-            # list_video_source_2 = html_iframe.xpath('//div[@class="reblog-list"]')
-            # 
-        # except:
-            # print('get list_video_source_2 error!')
-            # list_video_source_2 = []
-        # print( list_video_source_1)
-        if list_video_source_1:
-            for i in list_video_source_1:
-                get_page_video_post(i)
-        # print(list_video_source_2)
-        # if list_video_source_2:
-            # for i in list_video_source_2:
-                # get_page_video_reblog(i)
-# 
-def get_page_video_post(content_lxml):
+def get_page_video(content_lxml):
     """
     爬取用户自己发布的视频页面
     :param content_lxml:通过xpath获取的内容
     """
     # 获取框架页面链接列表
-    # url_iframe : https://everythingfox.tumblr.com/video_file/t:TQ_U5i4OlLu9TxRYtxAdzg/179493447941/tumblr_ph9x0xr04g1vmobp0/480
-    list_url_iframe = content_lxml.xpath('./div[@class="post_media"]//video/source/@src')
-    
-    # 视频保存名字
-    list_name_1 = content_lxml.xpath('./div[@class="post_body"]//p/text()')
-    list_name_2 = content_lxml.xpath('./div[@class = "reblog-list-item contributed-content"]//p/text()')
+    list_url_iframe = content_lxml.xpath('.//video/source/@src')
 
     # 先确认是否能获取框架页面链接列表，能则继续下一步
     if list_url_iframe:
-        # 获取框架页面链接
+        # 获取视频页面链接
         url_iframe = list_url_iframe[0]
         # print('url_iframe：' + url_iframe)
 
-        # 访问该链接，返回的url即为视频真正链接
         with open(sys.path[0] + '/user-agents.txt', 'r', encoding = 'utf-8') as f:
-            list_user_agents = f.readlines()
-            user_agent = random.choice(list_user_agents).strip()
+                list_user_agents = f.readlines()
+                user_agent = random.choice(list_user_agents).strip()
         headers = {'user-agent':user_agent}
-        try:
-            response_video_page = requests.get(url_iframe, headers = headers)
-        except:
-            print('get video page error:' + url_iframe)
-            response_video_page = ''
-        
-        # 确认是否访问成功
-        if response_video_page:
-            # 获取视频真正url
-            # url_video : https://vf.media.tumblr.com/tumblr_ph9x0xr04g1vmobp0_480.mp4
-            url_video = response_video_page.url
-            print('url_video:' + url_video)
 
-            with open(sys.path[0] + '/list_url_video.txt', 'a', encoding = 'utf-8') as f:
-                f.write(url_video + '\n')
+        # 判断是否还需要访问视频框架页面
+        pattren_url_video = re.compile(r'.*(\.mp4)')
+        judge_url_video = pattren_url_video.search(url_iframe)
 
-            # 确认视频保存名字：原用户发布内容下文字|转载用户转载内文字|视频链接取最后
-            if list_name_1 and len(list_name_1)<3:
-                name_video = ''.join(list_name_1) + '.mp4'
-            elif list_name_2 and len(list_name_2)<3:
-                name_video = ''.join(list_name_2) + '.mp4'
-            else:
-                pattren_name_video = re.compile(r'.*\/(.*)?', re.I)
-                name_video = pattren_name_video.search(url_video).group(1)
-            name_video = name_video.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','') 
-            print(name_video)
-            
-            # 获取视频内容
+        # 如果匹配不到.mp4,则需要访问框架页面
+        if judge_url_video is None:
+            # 访问该链接，返回的url即为视频真正链接
             try:
-                response_video = requests.get(url_video, headers = headers)
-                response_video.encoding = 'utf-8'
-                # time.sleep(1)
+                response_video_page = requests.get(url_iframe, headers = headers)
             except:
-                print('get video page error:' + url_video)
-                response_video = ''
-
-            # 如果能够获取视频内容，则保存内容
-            if response_video:
-                save_content_video(name_video, response_video.content)
-
-def get_page_video_reblog(content_lxml):
-    """
-    爬取视频页面
-    :param content_lxml:通过xpath获取的内容
-    """
-    # url_iframe : https://everythingfox.tumblr.com/video_file/t:TQ_U5i4OlLu9TxRYtxAdzg/179493447941/tumblr_ph9x0xr04g1vmobp0/480
-    list_url_video = content_lxml.xpath('./div[@class = "post-reblog-trail-item original-reblog-content"]/div[@class="post-reblog-content"]//source/@src')
-    # name_video = ''.join(content_lxml.xpath('./div[@class="post-reblog-content"]//p/text()')) 
-    list_name_1 = content_lxml.xpath('./div[@class = "post-reblog-trail-item original-reblog-content"]/div[@class="post-reblog-content"]//p/text()')
-    list_name_2 = content_lxml.xpath('./div[@class = "post-reblog-trail-item"]//p/text()')
-    if list_url_video:
-        url_video = list_url_video[0]
-        if list_name_1 and len(list_name_1)<3:
-            name_video = ''.join(list_name_1) + '.mp4'
-        elif list_name_2 and len(list_name_2)<3:
-            name_video = ''.join(list_name_2) + '.mp4'
+                print('load video page error:' + url_iframe)
+                response_video_page = requests.get(url_iframe, headers = headers)
+        
+            # 获取视频真正url
+            url_video = response_video_page.url
         else:
-            pattren_name_video = re.compile(r'.*\/(.*)?', re.I)
-            name_video = pattren_name_video.search(url_video).group(1) 
-        name_video = name_video.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','') 
-        print(name_video)
-        print(url_video)
-        # print(type(name_video))
-        with open(sys.path[0] + '/user-agents.txt', 'r', encoding = 'utf-8') as f:
-            list_user_agents = f.readlines()
-            user_agent = random.choice(list_user_agents).strip()
-        headers = {'user-agent':user_agent}
+            url_video = url_iframe
 
+        # 保存视频url链接
+        # with open(sys.path[0] + '/list_url_video.txt', 'a', encoding = 'utf-8') as f:
+            # f.write(url_video + '\n')
+
+        print('url_video:\t' + url_video)
+
+        # 确认视频保存名字：原用户发布内容下文字|转载用户转载内文字|视频链接取最后
+        # if list_name_1 and len(list_name_1)<3:
+            # name_video = ''.join(list_name_1) + '.mp4'
+        # elif list_name_2 and len(list_name_2)<3:
+            # name_video = ''.join(list_name_2) + '.mp4'
+        # elif list_name_3 and len(list_name_2)<3:
+            # name_video = ''.join(list_name_2) + '.mp4'
+        # elif list_name_4 and len(list_name_2)<3:
+            # name_video = ''.join(list_name_2) + '.mp4'
+        # else:
+            # pattren_name_video = re.compile(r'.*\/(.*)?', re.I)
+            # name_video = pattren_name_video.search(url_video).group(1)
+        pattren_name_video = re.compile(r'.*\/(.*)?', re.I)
+        name_video = pattren_name_video.search(url_video).group(1)
+        name_video = name_video.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','') 
+        # print(name_video)
+
+        # 获取视频内容
         try:
             response_video = requests.get(url_video, headers = headers)
-            response_video.encoding = 'utf-8'
-            time.sleep(1)
+            # response_video.encoding = 'utf-8'
+            # time.sleep(1)
         except:
             print('get video page error:' + url_video)
-            response_video = requests.get('https://www.baidu.com', headers = headers)
-
-        save_content_video(name_video, response_video.content)
+            response_video = ''
+        # 如果能够获取视频内容，则保存内容
+        if response_video:
+            save_content_video(name_video, response_video.content)
 
 def save_content_video(name_video, content_video):
     """
@@ -233,7 +192,7 @@ def save_content_video(name_video, content_video):
     :param name_video:视频保存名字
     :param content_video:视频链接
     """   
-    dir_save_vedio = sys.path[0] + '/user_likes_result/' + config.tumblr_user_likes_username_dir + '/'
+    dir_save_vedio = 'd:/tumblr_user_likes_spider_result/' + config.tumblr_user_likes_username_dir + '/'
     if not os.path.exists(dir_save_vedio):
         os.makedirs(dir_save_vedio)
     try:
