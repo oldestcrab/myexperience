@@ -122,6 +122,11 @@ def get_page_video(content_lxml):
     # 获取框架页面链接列表
     list_url_iframe = content_lxml.xpath('.//video/source/@src')
 
+    # 视频保存名字
+    list_name_1 = content_lxml.xpath('.//div[@class="post_body"]/p/text()')
+    list_name_2 = content_lxml.xpath('.//div[@class="reblog-content"]/p/text()')
+
+
     # 先确认是否能获取框架页面链接列表，能则继续下一步
     if list_url_iframe:
         # 获取视频页面链接
@@ -155,36 +160,34 @@ def get_page_video(content_lxml):
         # with open(sys.path[0] + '/list_url_video.txt', 'a', encoding = 'utf-8') as f:
             # f.write(url_video + '\n')
 
-        print('url_video:\t' + url_video)
+        # print('url_video:\t' + url_video)
 
         # 确认视频保存名字：原用户发布内容下文字|转载用户转载内文字|视频链接取最后
-        # if list_name_1 and len(list_name_1)<3:
-            # name_video = ''.join(list_name_1) + '.mp4'
-        # elif list_name_2 and len(list_name_2)<3:
-            # name_video = ''.join(list_name_2) + '.mp4'
-        # elif list_name_3 and len(list_name_2)<3:
-            # name_video = ''.join(list_name_2) + '.mp4'
-        # elif list_name_4 and len(list_name_2)<3:
-            # name_video = ''.join(list_name_2) + '.mp4'
-        # else:
-            # pattren_name_video = re.compile(r'.*\/(.*)?', re.I)
-            # name_video = pattren_name_video.search(url_video).group(1)
-        pattren_name_video = re.compile(r'.*\/(.*)?', re.I)
-        name_video = pattren_name_video.search(url_video).group(1)
-        name_video = name_video.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','') 
-        # print(name_video)
+        if list_name_1 and len(list_name_1)<3:
+            name_video = ''.join(list_name_1) + '.mp4'
+        elif list_name_2 and len(list_name_2)<3:
+            name_video = ''.join(list_name_2) + '.mp4'
+        else:
+        #     pattren_name_video = re.compile(r'.*\/(.*)?', re.I)
+        #     name_video = pattren_name_video.search(url_video).group(1)
+            name_video = ''
+        # pattren_name_video = re.compile(r'.*\/(.*)?', re.I)
+        # name_video = pattren_name_video.search(url_video).group(1)
+        if name_video:
+            name_video = name_video.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','').replace('\\n','').strip()
+            print(name_video)
 
-        # 获取视频内容
-        try:
-            response_video = requests.get(url_video, headers = headers)
-            # response_video.encoding = 'utf-8'
-            # time.sleep(1)
-        except:
-            print('get video page error:' + url_video)
-            response_video = ''
-        # 如果能够获取视频内容，则保存内容
-        if response_video:
-            save_content_video(name_video, response_video.content)
+            # 获取视频内容
+            try:
+                response_video = requests.get(url_video, headers = headers)
+                # response_video.encoding = 'utf-8'
+                # time.sleep(1)
+            except:
+                print('get video page error:' + url_video)
+                response_video = ''
+            # 如果能够获取视频内容，则保存内容
+            if response_video:
+                save_content_video(name_video, response_video.content)
 
 def save_content_video(name_video, content_video):
     """
