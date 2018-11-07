@@ -24,6 +24,7 @@ def browser_page_login(browser):
     wait = WebDriverWait(browser, 10)
     url_login = 'https://www.tumblr.com/login'
     try:
+        print('尝试登陆中......')
         browser.get(url_login)
         # 等待获取下一步按钮
         submit_next = wait.until(EC.element_to_be_clickable((By.XPATH, '//span[@class="signup_determine_btn active"]')))
@@ -45,6 +46,7 @@ def browser_page_login(browser):
         # 点击登录
         submit_login.click()
         # print(browser.page_source)
+        print('登录成功')
         
         # 返回浏览器对象
         return browser
@@ -168,26 +170,25 @@ def get_page_video(content_lxml):
         elif list_name_2 and len(list_name_2)<3:
             name_video = ''.join(list_name_2) + '.mp4'
         else:
-        #     pattren_name_video = re.compile(r'.*\/(.*)?', re.I)
-        #     name_video = pattren_name_video.search(url_video).group(1)
-            name_video = ''
+            pattren_name_video = re.compile(r'.*\/(.*)?', re.I)
+            name_video = pattren_name_video.search(url_video).group(1)
+           
         # pattren_name_video = re.compile(r'.*\/(.*)?', re.I)
         # name_video = pattren_name_video.search(url_video).group(1)
-        if name_video:
-            name_video = name_video.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','').replace('\\n','').strip()
-            print(name_video)
 
-            # 获取视频内容
-            try:
-                response_video = requests.get(url_video, headers = headers)
-                # response_video.encoding = 'utf-8'
-                # time.sleep(1)
-            except:
-                print('get video page error:' + url_video)
-                response_video = ''
-            # 如果能够获取视频内容，则保存内容
-            if response_video:
-                save_content_video(name_video, response_video.content)
+        name_video = name_video.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','').replace('\\n','').strip()
+        # print(name_video)
+        # 获取视频内容
+        try:
+            response_video = requests.get(url_video, headers = headers)
+            # response_video.encoding = 'utf-8'
+            # time.sleep(1)
+        except:
+            print('get video page error:' + url_video)
+            response_video = ''
+        # 如果能够获取视频内容，则保存内容
+        if response_video:
+            save_content_video(name_video, response_video.content)
 
 def save_content_video(name_video, content_video):
     """
@@ -211,7 +212,10 @@ def main():
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
 
     # 构造一个 WebDriver 对象，调用phantomjs
-    browser = webdriver.Chrome()
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument('--headless')
+    # chrome_options.add_argument('--disable-infobars')
+    browser = webdriver.Chrome(chrome_options=chrome_options)
     browser_next = browser_page_login(browser)
     # config.tumblr_likes_page : 爬取总页数    
     get_index_page(browser_next)
