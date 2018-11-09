@@ -1,12 +1,11 @@
 import re
 
-text = 'https://ve.media.tumblr.com/tumblr_pg205dxF8G1xthtef.mp4'
-
-pattern_search = re.compile(r'.*(\.mp4)', re.I)
+text = r'\n123'
+print(text)
+pattern_search = re.compile(r'(\\n1)', re.I)
 result_serach = pattern_search.search(text)
-result_serach = result_serach
 if result_serach:
-    print(type(result_serach.group()), result_serach.group())
+    print(type(result_serach.group()), result_serach.group(1))
 else:
     print(type(result_serach))
 

@@ -17,9 +17,9 @@ tumblr_user_likes_password = '08015417Qiu'
 # 文件保存位置文件夹名字
 tumblr_user_likes_username_dir = 'catcata'
 # 爬取起始页数
-tumblr_user_likes_page_start = 126
+tumblr_user_likes_page_start = 280
 # 爬取总页数
-tumblr_user_likes_page_end = 130
+tumblr_user_likes_page_end = 352
 # 350
 
 def main():
