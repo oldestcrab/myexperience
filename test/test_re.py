@@ -1,8 +1,8 @@
 import re
 
-text = r'\n123'
+text = 'http://w<斯蒂芬森>ww.zgz<-sd>ba<p><o.com/newshow.asp?id=49633'
 print(text)
-pattern_search = re.compile(r'(\\n1)', re.I)
+pattern_search = re.compile(r'<([^/aip]\w*)\s*.*?>{1}', re.I)
 result_serach = pattern_search.search(text)
 if result_serach:
     print(type(result_serach.group()), result_serach.group(1))

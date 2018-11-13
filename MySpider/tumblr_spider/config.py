@@ -13,7 +13,7 @@ tumblr_likes_judge_new = False
 # tumblr_user_likes_spider.py 的参数
 # 需要登陆的用户信息
 tumblr_user_likes_username = 'zuiwoxieyangq@gmail.com'
-tumblr_user_likes_password = '08015417Qiu'
+tumblr_user_likes_password = ''
 # 文件保存位置文件夹名字
 tumblr_user_likes_username_dir = 'catcata'
 # 爬取起始页数
