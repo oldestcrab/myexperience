@@ -125,7 +125,8 @@ def get_page(url):
                             # 图片网址:url_full_img: http://www.bio360.net/storage/image/2018/08/FG3XNGQGmD2HxBMqFgNNmiuLNXjTWHU9cnblI8TV.png
                             url_full_img =  'http://www.zgzbao.com/' + kw[1]
                             # 图片保存名：dwNNY7cwzRcOcsjRwMFcceLF9qTvhyDP8HiHTgQc.png
-                        # print('url_full_img:', type(url_full_img), url_full_img)
+                        # print(url_full_img)
+                        # print(url_full)
                         pattern_name_save_img = re.compile(r'.*\/(.*\.[jpbg][pmin]\w+)', re.I)
                         try:
                             name_save_img = pattern_name_save_img.search(kw[1]).group(1).replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
@@ -183,7 +184,7 @@ def parse_page(source_local):
         result_source = pattern_search_source.search(source_local).group(1).replace(r'&nbsp;','').replace(r'</span>','').strip()
     except:
         result_source = ''
-    print(result_source)
+    # print(result_source)
     # 发布时间：2018/10/31　 
     pattern_search_time = re.compile(r'发布时间：(.*?)</td>', re.I|re.S)
     result_time = pattern_search_time.search(source_local).group(1).strip()
@@ -292,12 +293,12 @@ def save_mysql(url_source, url_local):
     """
     db = pymysql.connect(host='localhost', user='bmnars', password='vi93nwYV', port=3306, db='bmnars')
     cursor = db.cursor()
-    url_local_full = '/home/bmnars/data/bio360_spider_result_v2/' + url_local  
+    url_local_full =  sys.path[0] + '/zgzbao_spider_result/' + url_local  
     update_time = time.strftime('%Y-%m-%d',time.localtime())
     data = {
         'source_url':url_source,
         'local_url':url_local_full,
-        'source':'www.bio360.net',
+        'source':'www.zgzbao.com',
 	    'update_time':update_time
     }
     table = '_cs_bmnars_link_v2'
@@ -337,9 +338,9 @@ def main():
             with open(dir_judge, 'w', encoding = 'utf-8'):
                 print('创建文件：' + dir_judge) 
         # 读取上次爬取时保存的用于判断爬取位置的字符串
-        # with open(dir_judge, 'r', encoding = 'utf-8') as f:
-                # judge = f.read()
-        judge = 1
+        with open(dir_judge, 'r', encoding = 'utf-8') as f:
+                judge = f.read()
+        # judge = 1
         index_page(num, judge, judge_name, url_kw)
 
     print("zgzbao_spider爬取完毕，脚本退出！")
