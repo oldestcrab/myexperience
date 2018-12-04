@@ -111,6 +111,22 @@
             "debugOptions": [
                 "RedirectOutput"
             ]
-        }
+        },
+        // {
+        //     "name": "python",
+        //     "type": "python",
+        //     "request": "launch",
+        //     "stopOnEntry": false,
+        //     "pythonPath": "D:/program/program_essential/Python36/python",
+        //     "program": "${file}",
+        //     "cwd": "${workspaceRoot}",
+        //     "env": {},
+        //     "envFile": "${workspaceRoot}/.env",
+        //     "debugOptions": [
+        //         "WaitOnAbnormalExit",
+        //         "WaitOnNormalExit",
+        //         "RedirectOutput"
+        //     ]
+        // },
     ]
 }
