@@ -8,7 +8,7 @@ from requests import ConnectionError
 import sys
 import os
 import random
-import pymysql
+
 
 
 
@@ -96,9 +96,11 @@ def get_page(url_index, title_index):
             dir_save_page = sys.path[0] + '/source/'
             if not os.path.exists(dir_save_page):
                 os.makedirs(dir_save_page)
-            content = '[' + source_article + ' | ' + title_index + '](' + url_full + ')'
+            # content = '[' + source_article + ' | ' + title_index + '](' + url_full + ')'
+            content = '<a href ="' + url_full + '">' + source_article + ' | ' + title_index + '</a><br/>' 
+            # print(content)
             # with open(dir_save_page + source_article + '.md', 'a', encoding = 'utf-8') as f:
-            with open(dir_save_page + 'source_article' + '.md', 'a', encoding = 'utf-8') as f:
+            with open(dir_save_page + 'source_article' + '.html', 'a', encoding = 'utf-8') as f:
                 f.write(content + '\n')
 
 def main():
