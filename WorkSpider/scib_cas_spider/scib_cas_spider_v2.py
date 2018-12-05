@@ -220,7 +220,7 @@ def parse_page(source_local):
             if img_real_name and match.group(1):
                 pattern_kw_name_save_img = re.compile(r'.*\/(.*\.[jpbg][pmin]\w+)', re.I)
                 kw_img_name = pattern_kw_name_save_img.search(match.group(1)).group(1).replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
-                img_name = '<img src="./img/' + kw_img_name + '" />'
+                img_name = '<img src="/home/bmnars/data/scib_cas_spider_result/img/' + kw_img_name + '" />'
                 # print('img_name:', type(img_name), img_name)
                 return img_name
     
@@ -265,7 +265,7 @@ def save_img(source, filename):
     :param source: 图片文件
     :param filename: 保存的图片名
     """
-    dir_save_img = sys.path[0] + '/scib_cas_spider_result/img/'
+    dir_save_img = '/home/bmnars/data/scib_cas_spider_result/img/'
     if not os.path.exists(dir_save_img):
         os.makedirs(dir_save_img)
     try:
@@ -282,7 +282,7 @@ def save_page(list_article,filename):
     :param list_article: 结果
     :param filename: 保存的文件名
     """
-    dir_save_page = sys.path[0] + '/scib_cas_spider_result/'
+    dir_save_page = '/home/bmnars/data/scib_cas_spider_result/'
     if not os.path.exists(dir_save_page):
         os.makedirs(dir_save_page)
     try:
@@ -300,7 +300,7 @@ def save_mysql(url_source, url_local):
     """
     db = pymysql.connect(host='localhost', user='bmnars', password='', port=3306, db='bmnars')
     cursor = db.cursor()
-    url_local_full =  sys.path[0] + '/scib_cas_spider_result/' + url_local  
+    url_local_full =  '/home/bmnars/data/scib_cas_spider_result/' + url_local  
     update_time = time.strftime('%Y-%m-%d',time.localtime())
     data = {
         'source_url':url_source,
@@ -354,9 +354,9 @@ def main():
             with open(dir_judge, 'w', encoding = 'utf-8'):
                 print('创建文件：' + dir_judge) 
         # 读取上次爬取时保存的用于判断爬取位置的字符串
-        # with open(dir_judge, 'r', encoding = 'utf-8') as f:
-                # judge = f.read()
-        judge = 1
+        with open(dir_judge, 'r', encoding = 'utf-8') as f:
+                judge = f.read()
+        # judge = 1
         index_page(num, judge, judge_name, url_kw)
 
     print("scib_cas_spider爬取完毕，脚本退出！")
