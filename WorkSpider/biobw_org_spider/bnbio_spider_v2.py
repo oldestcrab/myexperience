@@ -27,16 +27,13 @@ def index_page(page, judge, judge_name, url):
     for i in range(1,page):    
         # 如果judge_last_spider为False，则退出循环！
         # 拼接url
-        if i == 1:
-            url_full = url + '.html'
-        else:
-            url_full = url + '_' + str(i-1) + '.html'
+        url_full = url + '_' + str(i) + '.html'
 
         if not judge_last_spider:
             break
         print('正在爬取第' + str(i) + '页！\t' + judge_name)
 
-        print(url_full)
+        # print(url_full)
         with open(sys.path[0] + '/user-agents.txt', 'r', encoding = 'utf-8') as f:
             list_user_agents = f.readlines()
             user_agent = random.choice(list_user_agents).strip()
@@ -44,7 +41,7 @@ def index_page(page, judge, judge_name, url):
         try:
             # 获取索引页
             response_index = requests.get(url_full, headers = headers)
-            response_index.encoding = 'utf-8'
+            response_index.encoding = 'gb2312'
             time.sleep(2)
             # print(response_index.url)
         except ConnectionError:
@@ -54,15 +51,7 @@ def index_page(page, judge, judge_name, url):
         if response_index:
             # 通过xpath获取索引页内的文章列表url
             html_index = etree.HTML(response_index.text)
-            if judge_name == 'judge_tpxw.txt':
-                source_index = html_index.xpath('//td[@height="30"]/a/@href')
-                judge_url = 1
-            elif judge_name == 'judge_kyjz_1.txt':
-                judge_url = 2
-                source_index = html_index.xpath('//td[@class="line01"]/a/@href')
-            elif judge_name == 'judge_kply.txt':
-                judge_url = 3
-                source_index = html_index.xpath('//td[@class="line01"]/a/@href')
+            source_index = html_index.xpath('//ul[@id="lib_info_list"]//a/@href')
             # 写入当前爬取到的第一个文章url
             if i == 1 and source_index:
                 judge_next = source_index[0]
@@ -77,23 +66,18 @@ def index_page(page, judge, judge_name, url):
                     judge_last_spider = False
                     break
 
-                # item: ../zhxw/201811/t20181119_5189195.html
+                # item: /html_news/news_30096.html
                 # print(item)
-                get_page(item, judge_url)
+                get_page(item)
         
-def get_page(url, judge_url):
+def get_page(url):
     """
     提取文章内容
     :param url:文章链接需要的参数
     """
-    # url: ../zhxw/201811/t20181119_5189195.html
+    # url: /html_news/news_30096.html
     # url_full：http://www.scib.ac.cn/xwzx/zhxw/201811/t20181119_5189195.html
-    if judge_url == 1:
-        url_full = 'http://www.scib.ac.cn/xwzx' + url.replace('..','').replace('./','/')
-    elif judge_url == 2:   
-        url_full = 'http://www.scib.cas.cn/kycg/kyjz_1' + url.replace('..','').replace('./','/')
-    elif judge_url == 3:   
-        url_full = 'http://www.scib.ac.cn/xwzx/kply' + url.replace('..','').replace('./','/')
+    url_full = 'http://www.bnbio.com' + url
     # print(url_full)
     with open(sys.path[0] + '/user-agents.txt', 'r', encoding = 'utf-8') as f:
         list_user_agents = f.readlines()
@@ -102,31 +86,26 @@ def get_page(url, judge_url):
     # 获取文章
     try:
         response_article = requests.get(url_full, headers = headers)
-        response_article.encoding = 'utf-8'
+        response_article.encoding = 'gb2312'
         time.sleep(1)
     except:
         print('get_page error' + url_full)
 
     if response_article:
         # 通过正则表达式获取文章中需要的内容
-        pattren_article = re.compile(r'<td align="center" class="h1">.*<SCRIPT LANGUAGE="JavaScript">', re.S|re.I)
+        pattren_article = re.compile(r'<div class="art_con">.*相关推荐：', re.S|re.I)
         source_article = pattren_article.search(response_article.text)
         # print(source_article)
         if source_article:
             source_article = source_article.group()
-            # 获取文章中的图片前半段url链接: http://www.scib.ac.cn/xwzx/zhxw/201811
-            # print(response_article.url)
-            pattern_url_kw = re.compile(r'(.*\/)t\d+')
-            url_kw = pattern_url_kw.search(response_article.url).group(1)
-            # print(url_kw)
-            # 获取文章中所有的图片url链接: http://www.scib.ac.cn/xwzx/zhxw/201811/W020181119726371702847.jpg
+            # 获取文章中所有的图片url链接: http://www.bnbio.com/UploadFile/20181249819692.jpg
             pattern_img = re.compile(r'<img(.*?)\ssrc="(.*?)"', re.I)
             findall_img = pattern_img.findall(source_article)
             # print('findall_img:', type(findall_img), findall_img)
             # judge_img_get:判断能否获取图片
             judge_img_get = True
             for kw in findall_img:
-                # kw[1]: ./W020181119298135850881.jpg
+                # kw[1]: http://www.bnbio.com/UploadFile/20181249819692.jpg
                 # 判断图片URL是否需要组合
                 # print('kw[1]',kw[1])
                 pattern_judge_img = re.compile(r'http', re.I)
@@ -134,12 +113,12 @@ def get_page(url, judge_url):
                 if judge_img:
                     url_full_img = kw[1]
                 else:
-                    # 图片网址:url_full_img: http://www.scib.ac.cn/xwzx/zhxw/201811/W020181119726371702847.jpg
-                    url_full_img =  url_kw + kw[1].replace('./','')
+                    # 图片网址:url_full_img: http://www.bnbio.com/UploadFile/20181249819692.jpg
+                    url_full_img = 'http://www.bnbio.com' + kw[1]
                 # print('url_full_img',url_full_img)
                 pattern_name_save_img = re.compile(r'.*\/(.*\.[jpbg][pmin]\w+)', re.I)
                 try:
-                    # 图片保存名： W020181119298135850881.jpg
+                    # 图片保存名： 20181249819692.jpg
                     name_save_img = pattern_name_save_img.search(kw[1]).group(1).replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
                     # print('name_save_img:',  name_save_img)
                     # 获取图片
@@ -182,12 +161,12 @@ def parse_page(source_local):
     # print(type(html_source_local),html_source_local)
 
     # title_article: 微生物所钱韦研究组发现蛋白酶水解细菌受体的过程和适应意义
-    title_article = html_source_local.xpath('//td[@class="h1"]')[0].text
+    title_article = html_source_local.xpath('//div[@class="newstitle"]')[0].text
     title_article = '<title>' + title_article + '</title>\n' + '</head>\n'
     list_article.append(title_article)
     # print(title_article)
 
-    source_article = html_source_local.xpath('//td[@class="font03"]')[0].text
+    source_article = html_source_local.xpath('//div[@class="newsmeta"]')[0].text
     # print(source_article)
     try:
         pattern_result_time = re.compile(r'\d{4}-\d{2}-\d{2}', re.I|re.S)
@@ -196,13 +175,18 @@ def parse_page(source_local):
         result_time = ''
     # print(result_time) 
     result_user = ''
-    result_source = ''
+    try:
+        pattern_result_source = re.compile(r'来源：(.*)', re.I|re.S)
+        result_source = pattern_result_source.search(source_article).group(1).replace(r'&nbsp;','').replace(r'</span>','').strip()
+    except:
+        result_source = ''
+    # print(result_source)
     source_article = '<body>\n' + '<div class = "source">' + result_source + '</div>\n' + '<div class = "user">' + result_user + '</div>\n' + '<div class = "time">' + result_time + '</div>\n' + '<content>\n'
     list_article.append(source_article)
     # print(source_article)
 
     # 通过正则表达式获取文章中需要的内容，即正文部分
-    pattren_article_content = re.compile(r'<td align="left" class="font04" id="zoom">(.*)<SCRIPT LANGUAGE="JavaScript">', re.I|re.S)
+    pattren_article_content = re.compile(r'<div class="contents">(.*)相关推荐：', re.I|re.S)
     source_article = pattren_article_content.search(source_local)
 
     if source_article:
@@ -220,7 +204,7 @@ def parse_page(source_local):
             if img_real_name and match.group(1):
                 pattern_kw_name_save_img = re.compile(r'.*\/(.*\.[jpbg][pmin]\w+)', re.I)
                 kw_img_name = pattern_kw_name_save_img.search(match.group(1)).group(1).replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
-                img_name = '<img src="./img/' + kw_img_name + '" />'
+                img_name = '<img src="/home/bmnars/data/bnbio_spider_result/img/' + kw_img_name + '" />'
                 # print('img_name:', type(img_name), img_name)
                 return img_name
     
@@ -250,7 +234,7 @@ def parse_page(source_local):
         source_local = pattren_article_change_2.sub('<p>', source_local)
     
         # 剔除一些杂乱的样式
-        source_local = source_local.replace('<i>','').replace('<i style="font-size: 12pt">','').replace('&nbsp;','').replace('&','&amp;').strip()
+        source_local = source_local.replace('<i>','').replace('<i style="font-size: 12pt">','').replace('&nbsp;','').strip()
     
         # 清洗后的正文
         # print(source_local)
@@ -265,7 +249,7 @@ def save_img(source, filename):
     :param source: 图片文件
     :param filename: 保存的图片名
     """
-    dir_save_img = sys.path[0] + '/scib_cas_spider_result/img/'
+    dir_save_img = '/home/bmnars/data/bnbio_spider_result/img/'
     if not os.path.exists(dir_save_img):
         os.makedirs(dir_save_img)
     try:
@@ -282,7 +266,7 @@ def save_page(list_article,filename):
     :param list_article: 结果
     :param filename: 保存的文件名
     """
-    dir_save_page = sys.path[0] + '/scib_cas_spider_result/'
+    dir_save_page = '/home/bmnars/data/bnbio_spider_result/'
     if not os.path.exists(dir_save_page):
         os.makedirs(dir_save_page)
     try:
@@ -300,12 +284,12 @@ def save_mysql(url_source, url_local):
     """
     db = pymysql.connect(host='localhost', user='bmnars', password='', port=3306, db='bmnars')
     cursor = db.cursor()
-    url_local_full =  sys.path[0] + '/scib_cas_spider_result/' + url_local  
+    url_local_full =  '/home/bmnars/data/bnbio_spider_result/' + url_local  
     update_time = time.strftime('%Y-%m-%d',time.localtime())
     data = {
         'source_url':url_source,
         'local_url':url_local_full,
-        'source':'www.scib.ac.cn',
+        'source':'www.bnbio.com',
 	    'update_time':update_time
     }
     table = '_cs_bmnars_link_v2'
@@ -330,24 +314,16 @@ def main():
     """
     遍历每一页索引页
     """
-    print("scib_cas_spider爬取开始！")
+    print("bnbio_spider爬取开始！")
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
 
     # 用for循环遍历爬取不同分类下的文章
-    for wd in range(3):
+    for wd in range(1):
 
         if wd == 0:
-            judge_name = 'judge_tpxw.txt'
-            url_kw = 'http://www.scib.ac.cn/xwzx/tpxw/index'
-            num = 3
-        if wd == 1:
-            judge_name = 'judge_kyjz_1.txt'
-            url_kw = 'http://www.scib.ac.cn/kycg/kyjz_1/index'
-            num = 3
-        if wd == 2:
-            judge_name = 'judge_kply.txt'
-            url_kw = 'http://www.scib.ac.cn/xwzx/kply/index'
-            num = 3
+            judge_name = 'judge.txt'
+            url_kw = 'http://www.bnbio.com/nlist/nlist_2'
+            num = 8
 
         dir_judge = sys.path[0] + '/' + judge_name
         if not os.path.exists(dir_judge):
@@ -359,7 +335,7 @@ def main():
         # judge = 1
         index_page(num, judge, judge_name, url_kw)
 
-    print("scib_cas_spider爬取完毕，脚本退出！")
+    print("bnbio_spider爬取完毕，脚本退出！")
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
 
 
