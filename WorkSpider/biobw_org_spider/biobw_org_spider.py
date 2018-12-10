@@ -141,7 +141,7 @@ def get_page(url):
                 list_article = parse_page(source_article)
                 # 保存文章内容 
                 save_page(list_article, filename)
-                # save_mysql(url_full, filename)
+                save_mysql(url_full, filename)
             else:
                 print('获取不到图片：' + url_full)
         else:
@@ -164,7 +164,7 @@ def parse_page(source_local):
     title_article = html_source_local.xpath('//font')[0].text
     title_article = '<title>' + title_article + '</title>\n' + '</head>\n'
     list_article.append(title_article)
-    print(title_article)
+    # print(title_article)
 
     source_article = html_source_local.xpath('//font[@class="f3"]')[0].text
     # print(source_article)
@@ -179,7 +179,7 @@ def parse_page(source_local):
     # print(result_source)
     source_article = '<body>\n' + '<div class = "source">' + result_source + '</div>\n' + '<div class = "user">' + result_user + '</div>\n' + '<div class = "time">' + result_time + '</div>\n' + '<content>\n'
     list_article.append(source_article)
-    print(source_article)
+    # print(source_article)
 
     # 通过正则表达式获取文章中需要的内容，即正文部分
     pattren_article_content = re.compile(r'<div class="articleinfo">(.*)<div class="arear">', re.I|re.S)
@@ -207,7 +207,8 @@ def parse_page(source_local):
         # 匹配文章内容中的图片url，替换为本地图片url
         pattren_img_local = re.compile(r'<img.*?\ssrc="(.*?)".*?>{1}', re.I|re.S)
         source_local = pattren_img_local.sub(img_url_name, source_article)
-    
+        source_local = source_local.replace('<br />','<p />')
+
         # 剔除文章中不需要的内容
         def article_change(match):
             """
@@ -278,14 +279,14 @@ def save_mysql(url_source, url_local):
     :param url_source: 文章来源url
     :param url_local: 文章本地url
     """
-    db = pymysql.connect(host='localhost', user='bmnars', password='', port=3306, db='bmnars')
+    db = pymysql.connect(host='localhost', user='bmnars', password='vi93nwYV', port=3306, db='bmnars')
     cursor = db.cursor()
     url_local_full =  sys.path[0] + '/biobw_org_spider_result/' + url_local  
     update_time = time.strftime('%Y-%m-%d',time.localtime())
     data = {
         'source_url':url_source,
         'local_url':url_local_full,
-        'source':'www.bnbio.com',
+        'source':'www.biobw.org',
 	    'update_time':update_time
     }
     table = '_cs_bmnars_link_v2'
