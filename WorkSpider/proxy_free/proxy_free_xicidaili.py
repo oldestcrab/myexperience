@@ -6,7 +6,7 @@ from lxml import etree
 import time
 
 def get_proxy(url_kw, num):
-    for i in range(1,num):
+    for i in range(16,num):
         print('正在爬取第' + str(i) + '页高匿代理!')
         url_full = url_kw + str(i)
         # print(url_full)
@@ -57,7 +57,7 @@ def test_proxy(ip_proxy, port_proxy):
         'https':'https://' + proxy 
     }
     try:
-        response = requests.get(url, headers = headers, proxies = proxies)
+        response = requests.get(url, headers = headers, proxies = proxies, timeout = 4)
         # response = requests.get(url, headers = headers)
     except:
         response = ''
@@ -70,7 +70,7 @@ def test_proxy(ip_proxy, port_proxy):
         # print(type(ip_response))
         if ip_response == ip_proxy:
             print('get:  ' + proxy)
-            with open(sys.path[0] + '/ip_response.txt', 'a', encoding = 'utf-8') as f:
+            with open(sys.path[0] + '/ip_response_xicidaili.txt', 'a', encoding = 'utf-8') as f:
                 f.write(proxy + '\n')
             # print(dict_response['headers']['User-Agent'])
 
