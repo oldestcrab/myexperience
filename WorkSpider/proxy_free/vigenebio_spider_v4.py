@@ -285,7 +285,10 @@ def main():
 
     # 页码队列
     queue_page = Queue()
-    for i in range(1, 61092):
+
+
+    for i in range(1, 62000):
+        i = i.strip()
         kw = get_kw(i, 0)
         # print(kw)
         queue_page.put(kw)

@@ -34,11 +34,14 @@ def get_kw(kw, judge):
             cursor.execute(sql, (kw))
             # 获取一行
             row = cursor.fetchone()
-            cursor.close()
-            db.close()
+        
             return row[0]
         except:
             print('get kw error!')
+        finally:
+            cursor.close()
+            db.close()
+
     
     elif judge == 1:
         sql = 'update _cs_bmnars_vigenebio_kw set update_time=%s, status= 1, isrun = 1 where kw =%s;'
@@ -50,6 +53,10 @@ def get_kw(kw, judge):
         except:
             print('update error')
             db.rollback()
+        finally:
+            cursor.close()
+            db.close()
+
     elif judge == 2:
         
         sql = 'update _cs_bmnars_vigenebio_kw set update_time=%s, isrun = 1 where kw =%s;'
@@ -61,8 +68,10 @@ def get_kw(kw, judge):
         except:
             print('update error')
             db.rollback()
-    cursor.close()
-    db.close()
+        finally:
+            cursor.close()
+            db.close()
+
 
 
 
@@ -277,7 +286,7 @@ def main():
 
     # 页码队列
     queue_page = Queue()
-    for i in range(10000, 60000):
+    for i in range(1, 62000):
         kw = get_kw(i, 0)
         print(kw)
         queue_page.put(kw)
@@ -289,7 +298,7 @@ def main():
     lock = threading.Lock()
 
     # 三个采集线程的名字
-    list_crawl = ["采集线程1号", "采集线程2号", "采集线程3号"]
+    list_crawl = ["采集线程1号", "采集线程2号", "采集线程3号", "采集线程4号"]
     # print('list_crawl', list_crawl)
     # 存储三个采集线程的列表集合     
     thread_crawl = []
@@ -300,7 +309,7 @@ def main():
     # print('thread_crawl\t', thread_crawl)
 
     # 三个解析线程的名字
-    list_parse = ["解析线程1号", "解析线程2号", "解析线程3号"]
+    list_parse = ["解析线程1号", "解析线程2号", "解析线程3号", "解析线程4号"]
     # print('list_parse', list_parse)
     
     # 存储三个解析线程的列表集合     

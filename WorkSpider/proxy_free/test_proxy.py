@@ -26,7 +26,7 @@ proxies = {
 response = requests.get(url, headers = headers, proxies = proxies, timeout = 7)
 response.encoding = 'utf-8'
 source_html = etree.HTML(response.text)
-source = source_html.xpath('//div[@class="right"]//tbody/tr')
+source = source_html.xpath('//table[@width="980"]/tbody/tr')
 print(type(source),source)
 del source[0]
 print(source)
