@@ -327,9 +327,9 @@ def main():
             with open(dir_judge, 'w', encoding = 'utf-8'):
                 print('创建文件：' + dir_judge) 
         # 读取上次爬取时保存的用于判断爬取位置的字符串
-        # with open(dir_judge, 'r', encoding = 'utf-8') as f:
-                # judge = f.read()
-        judge = 1
+        with open(dir_judge, 'r', encoding = 'utf-8') as f:
+                judge = f.read()
+        # judge = 1
         index_page(num, judge, judge_name, url_kw)
 
     print("biobw_org_spider爬取完毕，脚本退出！")
