@@ -258,7 +258,7 @@ def parse_article_page(article_source):
             return tag_name
     
         article_change_pattern = re.compile(r'<([^/aip]\w*)\s*.*?>{1}', re.I)
-        article_source = article_change_pattern.sub(article_change, article_content)
+        article_content = article_change_pattern.sub(article_change, article_content)
     
         # 剔除所有除</ap>外的</>标签
         article_change_pattern_1 = re.compile(r'</[^pa].*?>{1}', re.I)
@@ -269,7 +269,7 @@ def parse_article_page(article_source):
         article_content = article_change_pattern_2.sub('<p>', article_content)
     
         # 剔除一些杂乱的样式
-        article_content = article_content.replace('<i>','').replace('<i style="font-size: 12pt">','').strip()
+        article_content = article_content.replace('<i>','').strip()
     
         # 清洗后的正文
         article_real_content = article_content + '\n</content>\n' + '</body>\n' + '</html>\n'
