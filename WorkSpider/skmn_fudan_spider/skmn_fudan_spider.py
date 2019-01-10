@@ -347,10 +347,13 @@ def save_mysql(source_url, filename, local_url_dir, article_origin_website):
 
 # 图片存储路径
 IMG_SAVE_DIR = sys.path[0] + '/skmn_fudan_spider_result/img/'
+# IMG_SAVE_DIR = '/home/bmnars/data/skmn_fudan_spider_result/img/'
 # 图片替换路径
 IMG_CHANGE_DIR = './img/'
+# IMG_CHANGE_DIR = '/home/bmnars/data/skmn_fudan_spider_result/img/'
 # 文件存储路径
 PAGE_SAVE_DIR = sys.path[0] + '/skmn_fudan_spider_result/'
+# PAGE_SAVE_DIR = '/home/bmnars/data/skmn_fudan_spider_result/'
 # 文章来源网站
 ARTICLE_ORIGIN_WEBSITE = 'http://skmn.fudan.edu.cn'
 
