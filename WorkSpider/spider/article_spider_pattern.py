@@ -17,7 +17,9 @@ class RequestsParams():
         """
         :return: 返回一个随机选择的user-agent
         """
-        with open(sys.path[0] + '/user-agents.txt', 'r', encoding = 'utf-8') as f:
+        user_agent_dir = r'C:/Users/CRAB/Desktop/myexperience/WorkSpider/spider/user-agents.txt'
+        # user_agent_dir = r'/home/bmnars/spider_porject/spider/user-agents.txt'
+        with open(user_agent_dir, 'r', encoding = 'utf-8') as f:
             user_agents_list = f.readlines()
             user_agent = random.choice(user_agents_list).strip()
         return user_agent
@@ -70,12 +72,34 @@ class ParseArticleSource():
 
         return article_content
 
-    def sub_article_content(self, article_content):
+    def sub_article_content(self, article_content, img_change_dir):
         """
-        剔除文章中不需要的内容
+        剔除文章中不需要的内容，并匹配文章内容中的图片url，替换为本地图片url
         :params article_content: 文章正文部分
+        :params img_change_dir: 图片替换路径
         :return: 清洗后的正文
         """
+
+        def img_url_change(match):
+            """
+            匹配文章内容中的图片url，替换为本地url
+            :return: 返回替换的文章url
+            """
+            img_origin_name_pattern = re.compile(r'\.[pjbg][pinm]', re.I)
+            img_origin_name = img_origin_name_pattern.search(match.group())
+            # print('match.group(1)', match.group(1))
+    
+            if img_origin_name and match.group(1):
+                img_save_part_name_pattern = re.compile(r'.*\/(.*\.[jpbg][pmin]\w+)', re.I)
+                img_save_part_name = img_save_part_name_pattern.search(match.group(1)).group(1).replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
+                img_name = '<img src="' + img_change_dir + img_save_part_name + '" />'
+                # print('img_name: ', img_name)
+                return img_name
+    
+        # 匹配文章内容中的图片url，替换为本地图片url
+        local_img_pattern = re.compile(r'<img.*?\ssrc="(.*?)".*?>{1}', re.I|re.S)
+        article_content = local_img_pattern.sub(img_url_change, article_content)
+
         # 剔除文章中不需要的内容
         def article_change(match):
             """
