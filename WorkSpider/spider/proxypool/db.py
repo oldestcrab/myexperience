@@ -40,14 +40,16 @@ class ReadisClient():
         :params proxy: 代理
         :params score: 代理分数
         """
-        if re.match(r'\d+\.\d+\.\d+\.\d+\:\d+', proxy):
+        if not re.match(r'\d+\.\d+\.\d+\.\d+\:\d+', proxy):
+            print(proxy, '代理不符合规则，丢弃！')
+            return 
+        else:
             if self.db.zcard(REDIS_KEY) < PROXIES_THRESHOLD:
                 if not self.score(proxy):
-                    self.db.zadd(REDIS_KEY, {proxy:score})
+                    return self.db.zadd(REDIS_KEY, {proxy:score})
             else:
                 print('代理池代理数量已满'+str(PROXIES_THRESHOLD)+'，不再添加代理！')
-        else:
-            print(proxy, '代理不符合规则，丢弃！')
+
 
     def max(self, proxy):
         """
