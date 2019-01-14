@@ -2,18 +2,26 @@
 from db import ReadisClient
 import re
 
+def set(proxy):
+    """
+    添加代理
+    :params proxy: 代理
+    """    
+    try:
+        # 连接redis
+        db = ReadisClient()
+        # 添加代理
+        result = db.add(proxy)
+        print(proxy,'导入成功!' if result else proxy,'导入失败!')
+    except:
+        pass
 
 def scan():
     """
-    导入代理
+    扫面代理
     """
     proxies_dir = input('请输入要导入的代理的绝对地址: ')
 
-    # 连接redis
-    db = ReadisClient()
-    print(db.exists('1.1.1.1:1'))
-    print(db.exists('2.2.2.2:2'))
-    print(db.exists('3.3.3.3:3'))
     # 获取要导入的代理
     try:
         with open(proxies_dir, 'r', encoding = 'utf-8') as f:
@@ -25,13 +33,9 @@ def scan():
     try:
         print('开始导入代理！')
         for proxy in proxies_list:
-            try:
-                db.add(proxy.strip())
-                print(proxy.strip(),'导入成功!' )
-            except:
-                print(proxy.strip(),'导入失败！')
+            set(proxy.strip())
     except:
-        pass
+        print('导入错误！')
 
     print('当前代理池总代理数量为：', db.count())
 
