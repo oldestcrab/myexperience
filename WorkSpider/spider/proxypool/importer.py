@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-from db import ReadisClient
+from db import RedisClient
 import re
 
 def set(proxy):
@@ -9,7 +9,7 @@ def set(proxy):
     """    
     try:
         # 连接redis
-        db = ReadisClient()
+        db = RedisClient()
         # 添加代理
         result = db.add(proxy)
         print(proxy,'导入成功!' if result else proxy,'导入失败!')

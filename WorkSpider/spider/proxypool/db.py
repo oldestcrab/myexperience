@@ -7,7 +7,7 @@ from random import choice
 import re
 from error import PoolEmptyError
 
-class ReadisClient():
+class RedisClient():
     def __init__(self, host = REDIS_HOST, port = REDIS_PORT, password = REDIS_PASSWORD):
         """
         初始化
@@ -15,7 +15,7 @@ class ReadisClient():
         :params port: redis端口
         :params password: redis密码
         """
-        super(ReadisClient, self).__init__()
+        super(RedisClient, self).__init__()
         self.db = redis.StrictRedis(host=host, port=port, password=password, decode_responses=True)
 
     def exists(self, proxy):
@@ -58,7 +58,7 @@ class ReadisClient():
         :params proxy: 代理
         """
         self.db.zadd(REDIS_KEY, {proxy:MAX_SCORE})
-        print(proxy, '可用，分数设置为最高值，当前分数为: ', self.score(proxy))
+        print(proxy, '\t可用，分数最高，当前分数为: ', self.score(proxy))
 
     def decrease(self, proxy):
         """
@@ -67,9 +67,9 @@ class ReadisClient():
         """
         if self.score(proxy) and self.score(proxy) > MIN_SCORE:
             self.db.zincrby(REDIS_KEY, -1, proxy)
-            print(proxy, '不可用，分数-1，当前分数为: ', self.score(proxy))
+            print(proxy, '\t无效，分数减一，当前分数为: ', self.score(proxy))
         else:
-            print(proxy, '分数为0，删除')
+            print(proxy, '\t分数为0，删除')
             self.db.zrem(REDIS_KEY, proxy)
 
     def all(self):
@@ -109,7 +109,7 @@ class ReadisClient():
         return self.db.zrevrange(REDIS_KEY, start, stop)
 
 def main():
-    a = ReadisClient()
+    a = RedisClient()
     # print(a.exists('222.222.222.222:22222'))
     # a.decrease('222.222.222.222:22222')
     # # b = a.all()

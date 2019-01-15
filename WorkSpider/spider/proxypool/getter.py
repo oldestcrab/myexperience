@@ -1,13 +1,13 @@
 # -*- coding:utf-8 -*-
 
-from db import ReadisClient
+from db import RedisClient
 from crawler import Crawler
 from setting import PROXIES_THRESHOLD
 import sys
 
 class Getter():
     def __init__(self):
-        self.redis = ReadisClient()
+        self.redis = RedisClient()
         self.crawler = Crawler()
 
     def is_over_threshold(self):

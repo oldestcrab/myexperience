@@ -19,3 +19,8 @@ INITIAL_SCORE = 10
 # 代理池数量限制
 PROXIES_THRESHOLD = 1000
 
+# 测试代理是否有效的网址
+TEST_URL = 'http://httpbin.org/get'
+
+# 测试步长
+BATCH_SIZE = 10
