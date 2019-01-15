@@ -39,6 +39,7 @@ class ReadisClient():
         添加一个代理到数据库，默认初始分值10分
         :params proxy: 代理
         :params score: 代理分数
+        :return: 添加结果
         """
         if not re.match(r'\d+\.\d+\.\d+\.\d+\:\d+', proxy):
             print(proxy, '代理不符合规则，丢弃！')
