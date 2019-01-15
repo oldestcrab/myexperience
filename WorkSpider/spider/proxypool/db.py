@@ -115,7 +115,7 @@ def main():
     # # b = a.all()
     # b = a.batch()
     # print(b)
-    print(a.batch(1, 5))
+    print(a.count())
 
 if __name__ == '__main__':
     main()
