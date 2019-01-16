@@ -60,7 +60,9 @@ class Tester():
             stop = min(i + BATCH_SIZE, count-1)
             print('正在测试第', start-1, '-', stop, '个代理！')
             proxies_list = self.redis.batch(start, stop)
+            # 把携程对象封装为task
             task = [self.test_single_proxy(proxy) for proxy in proxies_list]
+            # 运行
             loop.run_until_complete(asyncio.wait(task))
             sys.stdout.flush()
             time.sleep(5)
