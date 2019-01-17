@@ -106,7 +106,7 @@ class RedisClient():
         批量获取代理
         :return: 代理列表
         """
-        return self.db.zrevrange(REDIS_KEY, start, stop)
+        return self.db.zrevrange(REDIS_KEY, start, stop-1)
 
 def main():
     a = RedisClient()

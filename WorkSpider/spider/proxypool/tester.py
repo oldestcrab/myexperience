@@ -50,23 +50,27 @@ class Tester():
         """
         批量测试代理
         """
-        # 获取当前代理池代理数量
-        count = self.redis.count()
-        # 启用一个事件循环
-        loop = asyncio.get_event_loop()
-        # 批量测试代理
-        for i in range(0, count, BATCH_SIZE):
-            start = i
-            stop = min(i + BATCH_SIZE, count-1)
-            print('正在测试第', start-1, '-', stop, '个代理！')
-            proxies_list = self.redis.batch(start, stop)
-            # 把携程对象封装为task
-            task = [self.test_single_proxy(proxy) for proxy in proxies_list]
-            # 运行
-            loop.run_until_complete(asyncio.wait(task))
-            sys.stdout.flush()
-            time.sleep(5)
-
+        try:
+            # 获取当前代理池代理数量
+            count = self.redis.count()
+            print('当前共有', count, '个代理!')
+            # 批量测试代理
+            for i in range(0, count, BATCH_SIZE):
+                start = i
+                stop = min(i + BATCH_SIZE, count-1)
+                print('正在测试第', start+1, '-', stop, '个代理！')
+                proxies_list = self.redis.batch(start, stop)
+                # 启用一个事件循环
+                loop = asyncio.get_event_loop()
+                # 把携程对象封装为task
+                task = [self.test_single_proxy(proxy) for proxy in proxies_list]
+                # 运行
+                loop.run_until_complete(asyncio.wait(task))
+                sys.stdout.flush()
+                time.sleep(5)
+        except Exception as e:
+            print('测试器发生错误', e.args)
+            
 def main():
     mytester = Tester()
     mytester.run()

@@ -15,7 +15,7 @@ class Getter():
         判断是否达到代理池数量限制
         :return : 返回判断结果
         """
-        if self.redis.count() > PROXIES_THRESHOLD:
+        if self.redis.count() >= PROXIES_THRESHOLD:
             return True
         else:
             return False
@@ -24,7 +24,7 @@ class Getter():
         """
         从各大网站中获取代理
         """        
-        print('获取器开始执行!')
+        # print('获取器开始执行!')
         for callback_label in range(self.crawler.__CrawlFuncCount__):
             # 获取Crawler里面的以 crawl 开头的函数
             callback = self.crawler.__CrawlFunc__[callback_label]
@@ -36,6 +36,8 @@ class Getter():
                 # 添加代理到数据库
                 for proxy in proxies_list:
                     self.redis.add(proxy)
+            else:
+                print(callback, '代理池代理数量已满，不再爬取代理！')
 
         print('代理爬取完毕，当前代理池代理总数：', self.redis.count())
 

@@ -37,7 +37,6 @@ def scan():
     except:
         print('导入错误！')
 
-    print('当前代理池总代理数量为：', db.count())
 
 def main():
     scan()
