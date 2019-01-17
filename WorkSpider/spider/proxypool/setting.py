@@ -23,4 +23,4 @@ PROXIES_THRESHOLD = 1000
 TEST_URL = 'http://httpbin.org/get'
 
 # 测试步长
-BATCH_SIZE = 10
+BATCH_SIZE = 30
