@@ -5,6 +5,7 @@ import time
 import requests
 from lxml import etree
 from requests import ConnectionError
+import chardet
 import os
 import random
 import pymysql
@@ -44,7 +45,8 @@ def get_index_page(index_page, last_judge, last_judge_name, index_url):
         try:
             # 获取索引页
             index_response = requests.get(index_full_url, headers = headers)
-            index_response.encoding = 'utf-8'
+            cod = chardet.detect(index_response.content)
+            index_response.encoding = cod['encoding']
             time.sleep(2)
             # print(response_index.url)
         except Exception as e:
@@ -92,7 +94,8 @@ def get_article_page(page_url):
     # 获取文章
     try:
         article_response = requests.get(page_url, headers = headers)
-        article_response.encoding = 'utf-8'
+        cod = chardet.detect(article_response.content)
+        article_response.encoding = cod['encoding']
         time.sleep(1)
     except:
         article_response = ''
@@ -200,14 +203,16 @@ def get_article_page(page_url):
         else:
             print('get_page content error', page_url)
 
-
-# 图片替换路径
-IMG_CHANGE_DIR = './img/'
-# IMG_CHANGE_DIR = '/home/bmnars/data/shmc_fudan_spider_result/img/'
-
-# 文件存储路径
-PAGE_SAVE_DIR = sys.path[0] + '/shmc_fudan_spider_result/'
-# PAGE_SAVE_DIR = '/home/bmnars/data/shmc_fudan_spider_result/'
+# 判断运行位置，1表示本地运行
+run_as = 1
+if run_as == 1:
+    # 图片替换路径
+    IMG_CHANGE_DIR = './img/'
+    # 文件存储路径
+    PAGE_SAVE_DIR = sys.path[0] + '/shmc_fudan_spider_result/'
+else:
+    IMG_CHANGE_DIR = '/home/bmnars/data/shmc_fudan_spider_result/img/'
+    PAGE_SAVE_DIR = '/home/bmnars/data/shmc_fudan_spider_result/'
 
 # 文章来源网站
 ARTICLE_ORIGIN_WEBSITE = 'http://shmc.fudan.edu.cn'
