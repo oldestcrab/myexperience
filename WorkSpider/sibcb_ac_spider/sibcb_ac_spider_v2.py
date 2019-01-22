@@ -10,8 +10,8 @@ import random
 import pymysql
 import sys
 import chardet
-sys.path.append(r'C:/Users/CRAB/Desktop/myexperience/WorkSpider/spider')
-# sys.path.append(r'/home/bmnars/spider_porject/spider')
+# sys.path.append(r'C:/Users/CRAB/Desktop/myexperience/WorkSpider/spider')
+sys.path.append(r'/home/bmnars/spider_porject/spider')
 from article_spider_pattern import RequestsParams as RP, ParseArticleSource as PAS, SaveArticleSource as SAS
 
 
@@ -209,12 +209,12 @@ def get_article_page(page_url, article_update_time):
 
 
 # 图片替换路径
-IMG_CHANGE_DIR = './img/'
-# IMG_CHANGE_DIR = '/home/bmnars/data/sibcb_ac_spider_result/img/'
+# IMG_CHANGE_DIR = './img/'
+IMG_CHANGE_DIR = '/home/bmnars/data/sibcb_ac_spider_result/img/'
 
 # 文件存储路径
-PAGE_SAVE_DIR = sys.path[0] + '/sibcb_ac_spider_result/'
-# PAGE_SAVE_DIR = '/home/bmnars/data/sibcb_ac_spider_result/'
+# PAGE_SAVE_DIR = sys.path[0] + '/sibcb_ac_spider_result/'
+PAGE_SAVE_DIR = '/home/bmnars/data/sibcb_ac_spider_result/'
 
 # 文章来源网站
 ARTICLE_ORIGIN_WEBSITE = 'http://www.sibcb.ac.cn'
@@ -244,9 +244,9 @@ def main():
         if not os.path.exists(judge_dir):
             with open(judge_dir, 'w', encoding = 'utf-8'):
                 print('创建文件：' + judge_dir) 
-        # with open(judge_dir, 'r', encoding = 'utf-8') as f:
-                # last_judge = f.read()
-        last_judge = 1
+        with open(judge_dir, 'r', encoding = 'utf-8') as f:
+                last_judge = f.read()
+        # last_judge = 1
 
         # 获取索引页
         get_index_page(index_page, last_judge, last_judge_name, index_url)
