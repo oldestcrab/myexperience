@@ -36,8 +36,11 @@ def get_index_page(index_page, last_judge, last_judge_name, index_url):
         print('正在爬取第' + str(index_page) + '页！')
 
         # 拼接url
-        index_full_url = index_url + '/' + str(index_page)
-        # print('index_full_url', index_full_url)
+        if index_page == 1:
+            index_full_url = index_url 
+        else:
+            index_full_url = 'http://www.rcees.cas.cn/kyjz/index_' + str(index_page-1) + '.html'
+        print('index_full_url', index_full_url)
         # 获取Headers
         requests_params = RP()
         headers = {'user-agent':requests_params.user_agent()}
@@ -58,7 +61,7 @@ def get_index_page(index_page, last_judge, last_judge_name, index_url):
         if index_response:
             # 通过xpath获取索引页内的文章列表url
             index_html = etree.HTML(index_response.text)
-            index_source_list = index_html.xpath('//div[@class="info2"]//a/@href')
+            index_source_list = index_html.xpath('//td[@class="hh14"]//a/@href')
             
             # 写入当前爬取到的第一个文章url
             if index_page == 1 and index_source_list:
@@ -75,7 +78,7 @@ def get_index_page(index_page, last_judge, last_judge_name, index_url):
                     break
 
                 # 获取文章部分url
-                page_url = 'http://shmc.fudan.edu.cn/' + index_source
+                page_url = 'http://www.rcees.cas.cn/kyjz' + index_source.replace('./', '/')
                 # print('page_url', page_url)
 
                 # 获取索引页
@@ -103,12 +106,12 @@ def get_article_page(page_url):
 
     if article_response:
         # 通过正则表达式获取文章中需要的内容
-        article_pattren = re.compile(r'<div id="endtext">.*<div id="pages">', re.S|re.I)
+        article_pattren = re.compile(r' <td valign="top" id="zoom">.*</style>(.*)<td align="center">', re.S|re.I)
         article_source = article_pattren.search(article_response.text)
         # print(article_source)
 
         if article_source:
-            article_source = article_source.group()
+            article_source = article_source.group(1)
 
             # 解析文章类
             parse_page = PAS()
@@ -123,6 +126,13 @@ def get_article_page(page_url):
             # IMG_EXISTS:判断能否获取图片
             IMG_EXISTS = True
 
+            # 图片前半段url
+            try:
+                img_url_kw_pattern = re.compile(r'(.*)/t')
+                img_url_kw = img_url_kw_pattern.search(page_url).group(1)
+            except:
+                img_url_kw = 'http://www.rcees.cas.cn'
+            # print('img_url_kw: ',img_url_kw)
             for img_part_url in img_url_list:
                 # print('img_part_url[1]: ',img_part_url[1])
                 
@@ -132,7 +142,7 @@ def get_article_page(page_url):
                 if img_judge:
                     img_url = img_part_url[1]
                 else:
-                    img_url = 'http://news.fudan.edu.cn' + img_part_url[1]
+                    img_url = img_url_kw + img_part_url[1].replace('./', '/')
                 # print('img_url: ',img_url)
 
                 img_save_name_pattern = re.compile(r'.*\/(.*\.[jpbg][pmin]\w+)', re.I)
@@ -157,7 +167,7 @@ def get_article_page(page_url):
 
                 # 提取文件名
                 filename_pattern = re.compile(r'.*\/(.*)?', re.I)
-                filename = filename_pattern.search(page_url).group(1) + '.html'
+                filename = filename_pattern.search(page_url).group(1)
                 filename = filename.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
                 # print('filename: ',  filename)
 
@@ -167,28 +177,20 @@ def get_article_page(page_url):
 
                 article_html = etree.HTML(article_response.text)
                 # 获取文章标题
-                article_title = article_html.xpath('string(//h1)')[0].text.strip()
+                article_title = article_html.xpath('//td[@valign="top"]/ol[1]')[0].text.strip()
                 # print('article_title', article_title)
                 # 获取文章作者
-                try:
-                    article_user_pattern = re.compile(r'作者：(.*)来源')
-                    article_user = article_user_pattern.search(article_response.text).group(1).replace('</span><span>', '').strip()
-                except:
-                    article_user = ''
+                article_user = ''
                 # print('article_user', article_user)
                 # 获取文章更新时间
                 try:
-                    article_update_time_pattern = re.compile(r'发布时间.*(\d{4}-\d{2}-\d{2})')
+                    article_update_time_pattern = re.compile(r'(\d{4}-\d{2}-\d{2})')
                     article_update_time = article_update_time_pattern.search(article_response.text).group(1)
                 except:
                     article_update_time = ''
                 # print('article_update_time', article_update_time)
                 # 获取文章来源
-                try:
-                    article_origin_pattern = re.compile(r'来源：(.*?)发布时间')
-                    article_origin = article_origin_pattern.search(article_response.text).group(1).replace('</span><span>', '').strip()
-                except:
-                    article_origin = ''
+                article_origin = ''
                 # print('article_origin', article_origin)
 
                 article_content_list = parse_page.join_article_content(article_sub_content, article_title, article_user, article_update_time, article_origin)
@@ -209,20 +211,20 @@ if run_as == 1:
     # 图片替换路径
     IMG_CHANGE_DIR = './img/'
     # 文件存储路径
-    PAGE_SAVE_DIR = sys.path[0] + '/shmc_fudan_spider_result/'
+    PAGE_SAVE_DIR = sys.path[0] + '/rcees_cas_spider_result/'
 else:
-    IMG_CHANGE_DIR = '/home/bmnars/data/shmc_fudan_spider_result/img/'
-    PAGE_SAVE_DIR = '/home/bmnars/data/shmc_fudan_spider_result/'
+    IMG_CHANGE_DIR = '/home/bmnars/data/rcees_cas_spider_result/img/'
+    PAGE_SAVE_DIR = '/home/bmnars/data/rcees_cas_spider_result/'
 
 # 文章来源网站
-ARTICLE_ORIGIN_WEBSITE = 'http://shmc.fudan.edu.cn'
+ARTICLE_ORIGIN_WEBSITE = 'http://www.rcees.cas.cn'
 
 
 def main():
     """
     遍历每一页索引页
     """
-    print("shmc_fudan_spider爬取开始！")
+    print("rcees_cas_spider爬取开始！")
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
     start_time = time.time()
 
@@ -233,9 +235,9 @@ def main():
             # 保存爬取位置的文件名
             last_judge_name = 'judge.txt'
             # 索引url
-            index_url = 'http://shmc.fudan.edu.cn/news/kexueyanjiu'
+            index_url = 'http://www.rcees.cas.cn/kyjz/'
             # 要爬取的索引总页数
-            index_page = 5
+            index_page = 2
 
         # 读取上次爬取时保存的用于判断爬取位置的字符串,如果不存在则创建
         judge_dir = sys.path[0] + '/' + last_judge_name
@@ -249,7 +251,7 @@ def main():
         # 获取索引页
         get_index_page(index_page, last_judge, last_judge_name, index_url)
 
-    print("shmc_fudan_spider爬取完毕，脚本退出！")
+    print("rcees_cas_spider爬取完毕，脚本退出！")
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
     print('共用时：', time.time()-start_time)
 
