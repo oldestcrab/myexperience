@@ -1,5 +1,5 @@
-#### 复旦大学上海医学院网站文章爬取脚本
-- 爬取[科学研究](http://shmc.fudan.edu.cn/news/kexueyanjiu)分类下的文章
+#### 中国科学院生态环境研究中心网站文章爬取脚本
+- 爬取[科研进展](http://www.rcees.cas.cn/kyjz/)分类下的文章
 
 
 ### 目录
