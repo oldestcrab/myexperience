@@ -14,9 +14,13 @@ html = '''
 '''
 
 doc = pq(html)
-a = doc('#container .item-0 a')
-print(a)
-print(type(a))
+a = doc('li').items()
+# b = a.siblings('.item-1.active')
+b = a
+print(b)
+print(type(b))
+for i in a:
+    print(i)
 
 
 

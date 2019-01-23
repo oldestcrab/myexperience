@@ -3,15 +3,15 @@
 import re
 import time
 import requests
-from lxml import etree
+from pyquery import PyQuery as pq
 from requests import ConnectionError
 import chardet
 import os
 import random
 import pymysql
 import sys
-sys.path.append(r'C:/Users/CRAB/Desktop/myexperience/WorkSpider/spider')
-# sys.path.append(r'/home/bmnars/spider_porject/spider')
+# sys.path.append(r'C:/Users/CRAB/Desktop/myexperience/WorkSpider/spider')
+sys.path.append(r'/home/bmnars/spider_porject/spider')
 from article_spider_pattern import RequestsParams as RP, ParseArticleSource as PAS, SaveArticleSource as SAS
 
 
@@ -39,8 +39,8 @@ def get_index_page(index_page, last_judge, last_judge_name, index_url):
         if index_page == 1:
             index_full_url = index_url 
         else:
-            index_full_url = 'http://www.rcees.cas.cn/kyjz/index_' + str(index_page-1) + '.html'
-        print('index_full_url', index_full_url)
+            index_full_url = 'http://www.sinh.cas.cn/xwgg/kyjz/index_' + str(index_page-1) + '.html'
+        # print('index_full_url', index_full_url)
         # 获取Headers
         requests_params = RP()
         headers = {'user-agent':requests_params.user_agent()}
@@ -59,26 +59,25 @@ def get_index_page(index_page, last_judge, last_judge_name, index_url):
             print('get index page error: ' + index_full_url)
 
         if index_response:
-            # 通过xpath获取索引页内的文章列表url
-            index_html = etree.HTML(index_response.text)
-            index_source_list = index_html.xpath('//td[@class="hh14"]//a/@href')
-            
+            # 通过pyquery获取索引页内的文章列表url
+            index_html = pq(index_response.text)
+            index_source_list = index_html('#content a')
             # 写入当前爬取到的第一个文章url
             if index_page == 1 and index_source_list:
-                next_judge = index_source_list[0].strip()
+                next_judge = index_source_list.attr('href')
                 with open(sys.path[0] + '/' + last_judge_name, 'w', encoding = 'utf-8') as f:
                     print("next_judge: " + next_judge)
                     f.write(next_judge)
 
-            for index_source in index_source_list:
+            for index_source in index_source_list.items():
                 # 判断是否爬取到上次爬取位置,是的话LAST_THRESHOLD赋值为False      
-                if index_source == last_judge:
+                if index_source.attr('href') == last_judge:
                     print("已爬取到上次爬取位置！")
                     LAST_THRESHOLD = False
                     break
 
                 # 获取文章部分url
-                page_url = 'http://www.rcees.cas.cn/kyjz' + index_source.replace('./', '/')
+                page_url = 'http://www.sinh.cas.cn/xwgg/kyjz' + index_source.attr('href').replace('./', '/')
                 # print('page_url', page_url)
 
                 # 获取索引页
@@ -106,12 +105,12 @@ def get_article_page(page_url):
 
     if article_response:
         # 通过正则表达式获取文章中需要的内容
-        article_pattren = re.compile(r' <td valign="top" id="zoom">.*</style>(.*)<td align="center">', re.S|re.I)
+        article_pattren = re.compile(r'<div class="cas-article pt15">.*<div class="cas-wrap-appendix">', re.S|re.I)
         article_source = article_pattren.search(article_response.text)
         # print(article_source)
 
         if article_source:
-            article_source = article_source.group(1)
+            article_source = article_source.group()
 
             # 解析文章类
             parse_page = PAS()
@@ -131,7 +130,7 @@ def get_article_page(page_url):
                 img_url_kw_pattern = re.compile(r'(.*)/t')
                 img_url_kw = img_url_kw_pattern.search(page_url).group(1)
             except:
-                img_url_kw = 'http://www.rcees.cas.cn'
+                img_url_kw = 'http://www.sinh.cas.cn'
             # print('img_url_kw: ',img_url_kw)
             for img_part_url in img_url_list:
                 # print('img_part_url[1]: ',img_part_url[1])
@@ -175,17 +174,19 @@ def get_article_page(page_url):
                 article_sub_content = parse_page.sub_article_content(article_source, IMG_CHANGE_DIR)
                 # print(article_sub_content)
 
-                article_html = etree.HTML(article_response.text)
+                article_html = pq(article_response.text)
                 # 获取文章标题
-                article_title = article_html.xpath('//td[@valign="top"]/ol[1]')[0].text.strip()
+                try:
+                    article_title = article_html('h2').text()
+                except:
+                    article_title = ''
                 # print('article_title', article_title)
                 # 获取文章作者
                 article_user = ''
                 # print('article_user', article_user)
                 # 获取文章更新时间
                 try:
-                    article_update_time_pattern = re.compile(r'(\d{4}-\d{2}-\d{2})')
-                    article_update_time = article_update_time_pattern.search(article_response.text).group(1)
+                    article_update_time = article_html('.temp01-info-article span:nth-child(2)').text()
                 except:
                     article_update_time = ''
                 # print('article_update_time', article_update_time)
@@ -206,25 +207,25 @@ def get_article_page(page_url):
             print('get_page content error', page_url)
 
 # 判断运行位置，1表示本地运行
-run_as = 1
+run_as = 2
 if run_as == 1:
     # 图片替换路径
     IMG_CHANGE_DIR = './img/'
     # 文件存储路径
-    PAGE_SAVE_DIR = sys.path[0] + '/rcees_cas_spider_result/'
+    PAGE_SAVE_DIR = sys.path[0] + '/sinh_cas_spider_result/'
 else:
-    IMG_CHANGE_DIR = '/home/bmnars/data/rcees_cas_spider_result/img/'
-    PAGE_SAVE_DIR = '/home/bmnars/data/rcees_cas_spider_result/'
+    IMG_CHANGE_DIR = '/home/bmnars/data/sinh_cas_spider_result/img/'
+    PAGE_SAVE_DIR = '/home/bmnars/data/sinh_cas_spider_result/'
 
 # 文章来源网站
-ARTICLE_ORIGIN_WEBSITE = 'http://www.rcees.cas.cn'
+ARTICLE_ORIGIN_WEBSITE = 'http://www.sinh.cas.cn'
 
 
 def main():
     """
     遍历每一页索引页
     """
-    print("rcees_cas_spider爬取开始！")
+    print("sinh_cas_spider爬取开始！")
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
     start_time = time.time()
 
@@ -235,23 +236,23 @@ def main():
             # 保存爬取位置的文件名
             last_judge_name = 'judge.txt'
             # 索引url
-            index_url = 'http://www.rcees.cas.cn/kyjz/'
+            index_url = 'http://www.sinh.cas.cn/xwgg/kyjz/index.html'
             # 要爬取的索引总页数
-            index_page = 2
+            index_page = 3
 
         # 读取上次爬取时保存的用于判断爬取位置的字符串,如果不存在则创建
         judge_dir = sys.path[0] + '/' + last_judge_name
         if not os.path.exists(judge_dir):
             with open(judge_dir, 'w', encoding = 'utf-8'):
                 print('创建文件：' + judge_dir) 
-        # with open(judge_dir, 'r', encoding = 'utf-8') as f:
-                # last_judge = f.read()
-        last_judge = 1
+        with open(judge_dir, 'r', encoding = 'utf-8') as f:
+                last_judge = f.read()
+        # last_judge = 1
 
         # 获取索引页
         get_index_page(index_page, last_judge, last_judge_name, index_url)
 
-    print("rcees_cas_spider爬取完毕，脚本退出！")
+    print("sinh_cas_spider爬取完毕，脚本退出！")
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
     print('共用时：', time.time()-start_time)
 
