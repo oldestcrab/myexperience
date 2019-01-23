@@ -1,3 +1,26 @@
-article_update_time = '20190134'
-article_update_time = article_update_time[0:4] + '-' + article_update_time[4:6] + '-' + article_update_time[6:8]
-print(article_update_time)
+from pyquery import PyQuery as pq
+import sys
+
+html = '''
+<div id="container">
+    <ul class="list">
+         <li class="item-0">first item</li>
+         <li class="item-1"><a href="link2.html">second item</a></li>
+         <li class="item-0 active"><a href="link3.html"><span class="bold">third item</span></a></li>
+         <li class="item-1 active"><a href="link4.html">fourth item</a></li>
+         <li class="item-0"><a href="link5.html">fifth item</a></li>
+     </ul>
+ </div>
+'''
+
+doc = pq(html)
+a = doc('#container .item-0 a')
+print(a)
+print(type(a))
+
+
+
+
+
+
+
