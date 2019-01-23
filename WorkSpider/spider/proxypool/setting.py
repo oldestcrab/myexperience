@@ -26,7 +26,7 @@ TEST_URL = 'http://httpbin.org/get'
 BATCH_SIZE = 30
 
 # 获取器开关
-GETTER_ENABLED = False
+GETTER_ENABLED = True
 
 # 测试器开关
 TESTER_ENABLED = True
