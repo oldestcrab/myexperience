@@ -3,15 +3,15 @@
 import re
 import time
 import requests
-from lxml import etree
+from pyquery import PyQuery as pq
 from requests import ConnectionError
 import chardet
 import os
 import random
 import pymysql
 import sys
-sys.path.append(r'C:/Users/CRAB/Desktop/myexperience/WorkSpider/spider')
-# sys.path.append(r'/home/bmnars/spider_porject/spider')
+# sys.path.append(r'C:/Users/CRAB/Desktop/myexperience/WorkSpider/spider')
+sys.path.append(r'/home/bmnars/spider_porject/spider')
 from article_spider_pattern import RequestsParams as RP, ParseArticleSource as PAS, SaveArticleSource as SAS
 
 
@@ -36,15 +36,27 @@ def get_index_page(index_page, last_judge, last_judge_name, index_url):
         print('正在爬取第' + str(index_page) + '页！')
 
         # 拼接url
-        index_full_url = index_url + '/' + str(index_page)
+        index_full_url = index_url 
         # print('index_full_url', index_full_url)
         # 获取Headers
         requests_params = RP()
         headers = {'user-agent':requests_params.user_agent()}
         # print(headers)
+
+        # post参数
+        data = {
+            '__VIEWSTATE':'',
+            '__EVENTTARGET':'ctl00$ContentPlaceHolder1$Paginger',
+            '__EVENTARGUMENT':index_page,
+            'ctl00$top$txtSearch':'',
+            'ctl00$bottom$ddlLink1':'0',
+            'ctl00$bottom$ddlLink2':'0',
+            'ctl00$bottom$ddlLink3':'0',
+            'ctl00$bottom$ddlLink4':'0',
+        }
         try:
             # 获取索引页
-            index_response = requests.get(index_full_url, headers = headers)
+            index_response = requests.post(index_full_url, data=data, headers = headers)
             cod = chardet.detect(index_response.content)
             index_response.encoding = cod['encoding']
             time.sleep(2)
@@ -54,28 +66,28 @@ def get_index_page(index_page, last_judge, last_judge_name, index_url):
             print(e.args)
             index_response = ''
             print('get index page error: ' + index_full_url)
-
+        # print(index_response.text)
         if index_response:
             # 通过xpath获取索引页内的文章列表url
-            index_html = etree.HTML(index_response.text)
-            index_source_list = index_html.xpath('//div[@class="info2"]//a/@href')
+            index_html = pq(index_response.text)
+            index_source_list = index_html('.xingfa_nr li a')
             
             # 写入当前爬取到的第一个文章url
             if index_page == 1 and index_source_list:
-                next_judge = index_source_list[0].strip()
+                next_judge = index_source_list.attr('href')
                 with open(sys.path[0] + '/' + last_judge_name, 'w', encoding = 'utf-8') as f:
                     print("next_judge: " + next_judge)
                     f.write(next_judge)
 
-            for index_source in index_source_list:
+            for index_source in index_source_list.items():
                 # 判断是否爬取到上次爬取位置,是的话LAST_THRESHOLD赋值为False      
-                if index_source == last_judge:
+                if index_source.attr('href') == last_judge:
                     print("已爬取到上次爬取位置！")
                     LAST_THRESHOLD = False
                     break
 
                 # 获取文章部分url
-                page_url = 'http://shmc.fudan.edu.cn/' + index_source
+                page_url = 'http://medicine.fudan.edu.cn/' + index_source.attr('href')
                 # print('page_url', page_url)
 
                 # 获取索引页
@@ -103,9 +115,9 @@ def get_article_page(page_url):
 
     if article_response:
         # 通过正则表达式获取文章中需要的内容
-        article_pattren = re.compile(r'<div id="endtext">.*<div id="pages">', re.S|re.I)
+        article_pattren = re.compile(r'<td height="34" colspan="3" align="left" class="info">.*<!--right -->', re.S|re.I)
         article_source = article_pattren.search(article_response.text)
-        # print(article_source)
+        # print(article_source.group())
 
         if article_source:
             article_source = article_source.group()
@@ -132,7 +144,7 @@ def get_article_page(page_url):
                 if img_judge:
                     img_url = img_part_url[1]
                 else:
-                    img_url = 'http://news.fudan.edu.cn' + img_part_url[1]
+                    img_url = 'http://medicine.fudan.edu.cn' + img_part_url[1]
                 # print('img_url: ',img_url)
 
                 img_save_name_pattern = re.compile(r'.*\/(.*\.[jpbg][pmin]\w+)', re.I)
@@ -156,7 +168,7 @@ def get_article_page(page_url):
             if IMG_EXISTS:
 
                 # 提取文件名
-                filename_pattern = re.compile(r'.*\/(.*)?', re.I)
+                filename_pattern = re.compile(r'.*\=(.*)?', re.I)
                 filename = filename_pattern.search(page_url).group(1) + '.html'
                 filename = filename.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
                 # print('filename: ',  filename)
@@ -165,30 +177,22 @@ def get_article_page(page_url):
                 article_sub_content = parse_page.sub_article_content(article_source, IMG_CHANGE_DIR)
                 # print(article_sub_content)
 
-                article_html = etree.HTML(article_response.text)
+                article_html = pq(article_response.text)
                 # 获取文章标题
-                article_title = article_html.xpath('string(//h1)')[0].text.strip()
+                article_title = article_html('font:nth-child(1)').text()
                 # print('article_title', article_title)
                 # 获取文章作者
-                try:
-                    article_user_pattern = re.compile(r'作者：(.*)来源')
-                    article_user = article_user_pattern.search(article_response.text).group(1).replace('</span><span>', '').strip()
-                except:
-                    article_user = ''
+                article_user = ''
                 # print('article_user', article_user)
                 # 获取文章更新时间
                 try:
-                    article_update_time_pattern = re.compile(r'发布时间.*(\d{4}-\d{2}-\d{2})')
+                    article_update_time_pattern = re.compile(r'发表时间.*(\d{4}-\d{2}-\d{2})')
                     article_update_time = article_update_time_pattern.search(article_response.text).group(1)
                 except:
                     article_update_time = ''
                 # print('article_update_time', article_update_time)
                 # 获取文章来源
-                try:
-                    article_origin_pattern = re.compile(r'来源：(.*?)发布时间')
-                    article_origin = article_origin_pattern.search(article_response.text).group(1).replace('</span><span>', '').strip()
-                except:
-                    article_origin = ''
+                article_origin = ''
                 # print('article_origin', article_origin)
 
                 article_content_list = parse_page.join_article_content(article_sub_content, article_title, article_user, article_update_time, article_origin)
@@ -204,25 +208,25 @@ def get_article_page(page_url):
             print('get_page content error', page_url)
 
 # 判断运行位置，1表示本地运行
-run_as = 1
+run_as = 2
 if run_as == 1:
     # 图片替换路径
     IMG_CHANGE_DIR = './img/'
     # 文件存储路径
-    PAGE_SAVE_DIR = sys.path[0] + '/shmc_fudan_spider_result/'
+    PAGE_SAVE_DIR = sys.path[0] + '/medicine_fudan_edu_spider_result/'
 else:
-    IMG_CHANGE_DIR = '/home/bmnars/data/shmc_fudan_spider_result/img/'
-    PAGE_SAVE_DIR = '/home/bmnars/data/shmc_fudan_spider_result/'
+    IMG_CHANGE_DIR = '/home/bmnars/data/medicine_fudan_edu_spider_result/img/'
+    PAGE_SAVE_DIR = '/home/bmnars/data/medicine_fudan_edu_spider_result/'
 
 # 文章来源网站
-ARTICLE_ORIGIN_WEBSITE = 'http://shmc.fudan.edu.cn'
+ARTICLE_ORIGIN_WEBSITE = 'http://medicine.fudan.edu.cn'
 
 
 def main():
     """
     遍历每一页索引页
     """
-    print("shmc_fudan_spider爬取开始！")
+    print("medicine_fudan_edu_spider爬取开始！")
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
     start_time = time.time()
 
@@ -233,23 +237,23 @@ def main():
             # 保存爬取位置的文件名
             last_judge_name = 'judge.txt'
             # 索引url
-            index_url = 'http://shmc.fudan.edu.cn/news/kexueyanjiu'
+            index_url = 'http://medicine.fudan.edu.cn/news.aspx?info_lb=20&flag=20'
             # 要爬取的索引总页数
-            index_page = 5
+            index_page = 3
 
         # 读取上次爬取时保存的用于判断爬取位置的字符串,如果不存在则创建
         judge_dir = sys.path[0] + '/' + last_judge_name
         if not os.path.exists(judge_dir):
             with open(judge_dir, 'w', encoding = 'utf-8'):
                 print('创建文件：' + judge_dir) 
-        # with open(judge_dir, 'r', encoding = 'utf-8') as f:
-                # last_judge = f.read()
-        last_judge = 1
+        with open(judge_dir, 'r', encoding = 'utf-8') as f:
+                last_judge = f.read()
+        # last_judge = 1
 
         # 获取索引页
         get_index_page(index_page, last_judge, last_judge_name, index_url)
 
-    print("shmc_fudan_spider爬取完毕，脚本退出！")
+    print("medicine_fudan_edu_spider爬取完毕，脚本退出！")
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
     print('共用时：', time.time()-start_time)
 

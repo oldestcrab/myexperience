@@ -91,7 +91,7 @@ class ParseArticleSource():
     
             if img_origin_name and match.group(1):
                 img_save_part_name_pattern = re.compile(r'.*\/(.*\.[jpbg][pmin]\w+)', re.I)
-                img_save_part_name = img_save_part_name_pattern.search(match.group(1)).group(1).replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','')
+                img_save_part_name = img_save_part_name_pattern.search(match.group(1)).group(1).replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','').replace('%','')
                 img_name = '<img src="' + img_change_dir + img_save_part_name + '" />'
                 # print('img_name: ', img_name)
                 return img_name
