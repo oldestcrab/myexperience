@@ -1,3 +1,5 @@
+# -*- coding:utf-8 -*-
+
 from setting import REDIS_HOST, REDIS_PORT, REDIS_PASSWORD
 import redis
 from random import choice
@@ -25,8 +27,9 @@ class RedisClient(object):
         增加一对映射关系
         :params username: 用户名
         :params value: 密码或者cookies
+        : return: 添加结果
         """
-        self.db.hset(self.name(), username, value)
+        return self.db.hset(self.name(), username, value)
 
     def get(self, username):
         """
