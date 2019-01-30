@@ -1,4 +1,4 @@
-### cookiespool 说明文档
+### CookiesPool 说明文档
 
 #### 目录
 1. `db.py` 连接redis数据库，以及与数据库相关的各种方法
