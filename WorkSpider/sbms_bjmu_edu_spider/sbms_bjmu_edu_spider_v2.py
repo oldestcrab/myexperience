@@ -11,8 +11,8 @@ import os
 import random
 import pymysql
 import sys
-sys.path.append(r'C:/Users/CRAB/Desktop/myexperience/WorkSpider/spider')
-# sys.path.append(r'/home/bmnars/spider_porject/spider')
+# sys.path.append(r'C:/Users/CRAB/Desktop/myexperience/WorkSpider/spider')
+sys.path.append(r'/home/bmnars/spider_porject/spider')
 from article_spider_pattern import RequestsParams as RP, ParseArticleSource as PAS, SaveArticleSource as SAS
 
 
@@ -201,7 +201,7 @@ def get_article_page(page_url):
             print('get_page content error', page_url)
 
 # 判断运行位置，1表示本地运行
-run_as = 1
+run_as = 2
 if run_as == 1:
     # 图片替换路径
     IMG_CHANGE_DIR = './img/'

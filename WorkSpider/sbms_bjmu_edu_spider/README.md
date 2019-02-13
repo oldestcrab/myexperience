@@ -1,10 +1,10 @@
-#### 复旦大学基础医学院网站文章爬取脚本
-- 爬取[学院新闻](http://shmc.fudan.edu.cn/news/kexueyanjiu)分类下的文章
+#### 北京大学基础医学院网站文章爬取脚本
+- 爬取[学院新闻](http://sbms.bjmu.edu.cn/xyxw/index.htm)分类下的文章
 
 
 ### 目录
-1. `medicine_fudan_edu_spider.py`——爬取脚本（在windows上的vs code运行，并保存数据到mysql数据库）
-2. `medicine_fudan_edu_spider_v2.py`——爬取脚本（在linux运行，并保存数据到mysql数据库）
-3. `medicine_fudan_edu_spider_result`——爬取到的文章保存位置
-4. `medicine_fudan_edu_spider_result/img`——爬取的文章图片保存位置
-5. `judge*.txt`——保存判断值，用于判断上次爬取位置
+1. `sbms_bjmu_edu_spider.py` 爬取脚本（在windows上的vs code运行，并保存数据到mysql数据库）
+2. `sbms_bjmu_edu_spider_v2.py` 爬取脚本（在linux运行，并保存数据到mysql数据库）
+3. `sbms_bjmu_edu_spider_result` 爬取到的文章保存位置
+4. `sbms_bjmu_edu_spider_result/img` 爬取的文章图片保存位置
+5. `judge*.txt` 保存判断值，用于判断上次爬取位置
