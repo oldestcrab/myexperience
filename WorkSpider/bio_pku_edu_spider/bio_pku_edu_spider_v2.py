@@ -251,5 +251,3 @@ def main():
 if __name__ == '__main__':
     main()
 
-
-/home/bmnars/spider_porject/bmnars_venv/bin/python /home/bmnars/spider_porject/bio_pku_edu_spider/bio_pku_edu_spider_v2.py >>/home/bmnars/spider_porject/bio_pku_edu_spider/log/$(date +%Y-%m-%d).log 2>&1
