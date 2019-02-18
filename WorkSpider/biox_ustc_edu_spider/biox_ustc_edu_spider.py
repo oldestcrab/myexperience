@@ -11,8 +11,8 @@ import os
 import random
 import pymysql
 import sys
-# sys.path.append(r'C:/Users/CRAB/Desktop/myexperience/WorkSpider/spider')
-sys.path.append(r'/home/bmnars/spider_porject/spider')
+sys.path.append(r'C:/Users/CRAB/Desktop/myexperience/WorkSpider/spider')
+# sys.path.append(r'/home/bmnars/spider_porject/spider')
 from article_spider_pattern import RequestsParams as RP, ParseArticleSource as PAS, SaveArticleSource as SAS
 
 
@@ -59,11 +59,11 @@ def get_index_page(index_page, last_judge, last_judge_name, index_url):
         if index_response:
             # 通过xpath获取索引页内的文章列表url
             index_html = pq(index_response.text)
-            index_source_list = index_html('.title a')
+            index_source_list = index_html('.list')
             # print(index_source_list.attr('href'))
             # 写入当前爬取到的第一个文章url
             if index_page == 1 and index_source_list:
-                next_judge = index_source_list.attr('href')
+                next_judge = index_source_list('a').attr('href')
                 with open(sys.path[0] + '/' + last_judge_name, 'w', encoding = 'utf-8') as f:
                     print("next_judge: " + next_judge)
                     f.write(next_judge)
@@ -75,15 +75,18 @@ def get_index_page(index_page, last_judge, last_judge_name, index_url):
                     LAST_THRESHOLD = False
                     break
                 # 获取文章部分url
-                page_url = 'http://www.icsb.tsinghua.edu.cn' + index_source.attr('href')
+                page_url = 'https://biox.ustc.edu.cn' + index_source('a').attr('href')
                 # print('page_url', page_url)
+                article_update_time = index_source('span').text()
+                # print(article_update_time)
                 # 获取索引页
-                get_article_page(page_url)
+                get_article_page(page_url, article_update_time)
         
-def get_article_page(page_url):
+def get_article_page(page_url, article_update_time):
     """
     获取文章内容
     :param page_url:文章url
+    :param article_update_time:文章更新时间
     """
 
     requests_params = RP()
@@ -103,7 +106,7 @@ def get_article_page(page_url):
 
     if article_response:
         # 通过正则表达式获取文章中需要的内容
-        article_pattren = re.compile(r'</h3>(.*)<div class="footer">', re.S|re.I)
+        article_pattren = re.compile(r'<div class="justify">(.*)<script type="text/javascript" language="javascript">', re.S|re.I)
         article_source = article_pattren.search(article_response.text)
         # print(article_source.group(1))
 
@@ -132,7 +135,7 @@ def get_article_page(page_url):
                 if img_judge:
                     img_url = img_part_url[1]
                 else:
-                    img_url = 'http://www.icsb.tsinghua.edu.cn' + img_part_url[1].replace('..','')
+                    img_url = 'https://biox.ustc.edu.cn' + img_part_url[1].replace('..','')
                 # print('img_url: ',img_url)
 
                 img_save_name_pattern = re.compile(r'.*\/(.*\.[jpbg][pmin]\w+)', re.I)
@@ -156,8 +159,8 @@ def get_article_page(page_url):
             if IMG_EXISTS:
 
                 # 提取文件名
-                filename_pattern = re.compile(r'.*\/(.*)?', re.I)
-                filename = filename_pattern.search(page_url).group(1) + '.html'
+                filename_pattern = re.compile(r'.*\/c(.*)?', re.I)
+                filename = filename_pattern.search(page_url).group(1).replace( '.htm' , '.html')
                 filename = filename.replace(r'/','').replace(r'\\','').replace(':','').replace('*','').replace('"','').replace('<','').replace('>','').replace('|','').replace('?','').replace('/page','')
                 # print('filename: ',  filename)
 
@@ -167,17 +170,12 @@ def get_article_page(page_url):
 
                 article_html = etree.HTML(article_response.text)
                 # 获取文章标题
-                article_title = article_html.xpath('//h3')[0].text.strip()
+                article_title = article_html.xpath('//h1/span')[0].text.strip()
                 # print('article_title', article_title)
                 # 获取文章作者
                 article_user = ''
                 # print('article_user', article_user)
                 # 获取文章更新时间
-                try:
-                    article_update_time_pattern = re.compile(r'.*(\d{4}-\d{2}-\d{2})')
-                    article_update_time = article_update_time_pattern.search(article_response.text).group(1)
-                except:
-                    article_update_time = ''
                 # print('article_update_time', article_update_time)
                 # 获取文章来源
                 article_origin = ''
@@ -196,25 +194,25 @@ def get_article_page(page_url):
             print('get_page content error', page_url)
 
 # 判断运行位置，1表示本地运行
-run_as = 5
+run_as = 1
 if run_as == 1:
     # 图片替换路径
     IMG_CHANGE_DIR = './img/'
     # 文件存储路径
-    PAGE_SAVE_DIR = sys.path[0] + '/icsb_tsinghua_edu_spider_result/'
+    PAGE_SAVE_DIR = sys.path[0] + '/biox_ustc_edu_spider_result/'
 else:
-    IMG_CHANGE_DIR = '/home/bmnars/data/icsb_tsinghua_edu_spider_result/img/'
-    PAGE_SAVE_DIR = '/home/bmnars/data/icsb_tsinghua_edu_spider_result/'
+    IMG_CHANGE_DIR = '/home/bmnars/data/biox_ustc_edu_spider_result/img/'
+    PAGE_SAVE_DIR = '/home/bmnars/data/biox_ustc_edu_spider_result/'
 
 # 文章来源网站
-ARTICLE_ORIGIN_WEBSITE = 'http://www.icsb.tsinghua.edu.cn'
+ARTICLE_ORIGIN_WEBSITE = 'https://biox.ustc.edu.cn'
 
 
 def main():
     """
     遍历每一页索引页
     """
-    print("icsb_tsinghua_edu_spider爬取开始！")
+    print("biox_ustc_edu_spider爬取开始！")
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
     start_time = time.time()
 
@@ -225,7 +223,7 @@ def main():
             # 保存爬取位置的文件名
             last_judge_name = 'judge.txt'
             # 索引url
-            index_url = 'http://www.icsb.tsinghua.edu.cn/column/kxyj_kycg'
+            index_url = 'https://biox.ustc.edu.cn/632/list.htm'
             # 要爬取的索引总页数
             index_page = 2
 
@@ -234,18 +232,17 @@ def main():
         if not os.path.exists(judge_dir):
             with open(judge_dir, 'w', encoding = 'utf-8'):
                 print('创建文件：' + judge_dir) 
-        with open(judge_dir, 'r', encoding = 'utf-8') as f:
-                last_judge = f.read()
-        # last_judge = 1
+        # with open(judge_dir, 'r', encoding = 'utf-8') as f:
+                # last_judge = f.read()
+        last_judge = 1
 
         # 获取索引页
         get_index_page(index_page, last_judge, last_judge_name, index_url)
 
-    print("icsb_tsinghua_edu_spider爬取完毕，脚本退出！")
+    print("biox_ustc_edu_spider爬取完毕，脚本退出！")
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
     print('共用时：', time.time()-start_time)
 
 
 if __name__ == '__main__':
     main()
-
