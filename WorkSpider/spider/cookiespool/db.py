@@ -61,7 +61,7 @@ class RedisClient(object):
         """
         return choice(self.db.hvals(self.name()))
 
-    def username(self):
+    def usernames(self):
         """
         获取当前hash名称的所有账户信息
         : return: 返回当前hash名称的所有账户信息
@@ -76,6 +76,6 @@ class RedisClient(object):
         return self.db.hgetall(self.name())
 
 if __name__ == '__main__':
-    mydb = RedisClient('count', 'weibo')
+    mydb = RedisClient('accounts', 'weibo')
     # print(mydb.set('1', '111'))
-    print(mydb.username())
+    print(mydb.usernames())
