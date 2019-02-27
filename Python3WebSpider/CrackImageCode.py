@@ -4,8 +4,11 @@ import sys
 from collections import defaultdict
 
 image = Image.open(sys.path[0]+'/some/checkcode.gif')
+image.show()
 # image = Image.open(sys.path[0]+'/some/code.jpg')
 image = image.convert('L')
+image.show()
+
 threshold = 50
 table = []
 for i in range(256):
