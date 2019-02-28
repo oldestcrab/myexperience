@@ -16,11 +16,13 @@ import sys
 class Crack_bilibili():
     def __init__(self):
         self.url = 'https://passport.bilibili.com/login'
+        # 测试是否登陆成功
+        self.test_url = 'https://account.bilibili.com/account/home'
         self.browser = webdriver.Chrome()
         self.wait = WebDriverWait(self.browser, 20)
-        self.email = '18819425701'
+        self.email = '188195701'
         self.password = '08015417Qiu'
-    
+
     def __del__(self):
         self.browser.close()
 
@@ -76,7 +78,10 @@ class Crack_bilibili():
         :return: 拼接后的图片
         """
         # 获取图片
-        resq = requests.get(image_url)
+        headers = {
+            'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+        }
+        resq = requests.get(image_url, headers=headers)
         file = BytesIO(resq.content)
         # 调用Image拼接图片
         img = Image.open(file)
@@ -111,34 +116,13 @@ class Crack_bilibili():
 
         # new_img.show()
         return new_img
-
-    def get_geetest_button(self):
-        """
-        获取初始验证按钮
-        :return:
-        """
-        button = self.wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'geetest_radar_tip')))
-        return button
-    
-    def get_position(self):
-        """
-        获取验证码位置
-        :return: 验证码位置元组
-        """
-        img = self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'geetest_widget')))
-        time.sleep(2)
-        location = img.location
-        size = img.size
-        top, bottom, left, right = location['y'], location['y'] + size['height'], location['x'], location['x'] + size[
-            'width']
-        return (top, bottom, left, right)
     
     def get_distance(self, cut_image, full_image):
         """
         获取缺口偏移量
         :param cut_image: 带缺口图片
         :param full_image: 完整图片
-        :return:
+        :return:缺口偏移量
         """
         # 滑块的初始位置
         left = 60
@@ -184,23 +168,24 @@ class Crack_bilibili():
         """
         # 创建存放轨迹信息的列表
         track = []
-        distance_half = distance * 1/2
+        distance_half = distance 
+        # distance_half = distance * 1/2
         # print(distance_half)
-        for i in range(2):
+        for i in range(1):
             # 当前位移
             current = 0
             # 减速阈值
             mid = distance_half * 4 / 5
             # 计算间隔
-            t = 0.2
+            t = 0.1
             # 初速度
-            v = 1
+            v = 0
             # 当尚未移动到终点时
             while current < distance_half:
                 # 如果处于加速阶段
                 if current < mid:
                     # 加速度为正2
-                    a = 2
+                    a = 3
                 # 如果处于减速阶段
                 else:
                     # 加速度为负2
@@ -213,6 +198,7 @@ class Crack_bilibili():
                 move = v0 * t + 1 / 2 * a * t * t
                 # 当前位移
                 current += move
+                # print(move)
                 # 加入轨迹
                 track.append(round(move))
             # print(track)
@@ -237,40 +223,27 @@ class Crack_bilibili():
         for x in track:
             # 使用move_by_offset()方法拖动滑块，perform()方法用于执行
             ActionChains(self.browser).move_by_offset(xoffset=x, yoffset=0).perform()
-        fake_track = [2,3,3,2,2,3,3,2,2,3,3,2,2,3,3,2]
-        for x in fake_track:
-            # 使用move_by_offset()方法拖动滑块，perform()方法用于执行
-            ActionChains(self.browser).move_by_offset(xoffset=x, yoffset=0).perform()
-        for x in fake_track:
-            # 使用move_by_offset()方法拖动滑块，perform()方法用于执行
-            ActionChains(self.browser).move_by_offset(xoffset=-x, yoffset=0).perform()
+        # fake_track = [2,3,3,2,2,3,3,2,2,3,3,2,2,3,3,2]
+        # for x in fake_track:
+        #     ActionChains(self.browser).move_by_offset(xoffset=x, yoffset=0).perform()
+        # for x in fake_track:
+        #     ActionChains(self.browser).move_by_offset(xoffset=-x, yoffset=0).perform()
 
         # 模拟人类对准时间
         time.sleep(0.5)
         # 释放滑块
         ActionChains(self.browser).release().perform()
     
-    def login(self):
+    def crack(self):
         """
-        点击登录
+        验证码验证
+        :return :验证结果
         """
-        submit = self.wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'btn-login')))
-        submit.click()
-        time.sleep(10)
-        print('登录成功')
-    
-    def run(self):
-        """
-        运行
-        """
-        # 输入用户名密码
-        self.open()
-        
         # 获取带缺口的验证码图片
         cut_image_url, cut_image_location = self.get_image_info('//div[@class="gt_cut_bg_slice"]')
         # 获取完整的验证码图片
         full_image_url, full_image_location = self.get_image_info('//div[@class="gt_cut_fullbg_slice"]')
-        print(cut_image_url, full_image_url)
+        # print(cut_image_url, full_image_url)
 
         # 根据坐标拼接图片
         cut_image = self.mosaic_image(cut_image_url, cut_image_location)
@@ -284,11 +257,11 @@ class Crack_bilibili():
         gap = self.get_distance(cut_image, full_image)
         print('缺口位置', gap)
         # 减去缺口位移
-        gap -= 6
+        gap -= 5
 
         # 获取移动轨迹
         track = self.get_track(gap)
-        print('滑动轨迹', track)
+        # print('滑动轨迹', track)
 
         # 获取滑块标签
         slider = self.get_slider()
@@ -296,15 +269,52 @@ class Crack_bilibili():
 
         # 拖动滑块
         self.move_to_gap(slider, track)
+
         try:
             # 判断是否验证通过
             success = self.wait.until(
                 EC.text_to_be_present_in_element((By.XPATH, '//span[@class="gt_info_type"]'), '验证通过:'))
-            # 通过则点击登陆
-            self.login()
         except:
-            # 失败后重试
-            self.run()
+            success = False
+
+        return success
+
+    def refresh(self):
+        """
+        刷新验证码
+        """
+        print('刷新验证码')
+        slider = self.get_slider()
+        ActionChains(self.browser).move_to_element(slider).perform()
+        # 获取验证码刷新按钮
+        again = self.wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'gt_refresh_button')))
+        # 点击刷新
+        again.click()
+
+    def login(self):
+        """
+        点击登录
+        """
+        submit = self.wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'btn-login')))
+        submit.click()
+        try:
+            self.wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="nav-name"]')))
+            print('登陆成功!')
+        except:
+            print('用户名或密码错误！')
+
+    def run(self):
+        """
+        运行
+        """
+        # 输入用户名密码
+        self.open()
+        # 验证码验证,不通过尝试刷新直至通过为止
+        while not self.crack():
+            # self.refresh()
+            pass
+        # 验证码验证通过，登陆
+        self.login()
         
 if __name__ == '__main__':
     crack = Crack_bilibili()
