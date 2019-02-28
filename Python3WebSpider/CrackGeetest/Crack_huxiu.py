@@ -48,6 +48,7 @@ class CrackHuxiu():
         :params xpath: xpath选择器规则
         :return :验证码图片url，位置信息
         """
+        time.sleep(2)
         # 定义获取验证码图片url，位置信息的正则
         img_info_pattern = re.compile(r'background-image: url\("(.*?)"\); background-position: (.*?)px (.*?)px;')
         # 定位验证码标签
@@ -125,7 +126,7 @@ class CrackHuxiu():
         :params full_img: 完整验证码图片
         :return :缺口偏移量
         """
-        print(cut_img.width, cut_img.height)
+        # print(cut_img.width, cut_img.height)
         # 滑块的初始位置
         left = 53
         # 遍历像素点横坐标坐标
@@ -149,17 +150,78 @@ class CrackHuxiu():
         """
         # 获取带缺口图片的像素点（按照RGB格式）
         cut_pixel = cut_img.load()[x,y]
-        print(cut_pixel)
+        # print(cut_pixel)
         # 获取w完整图片的像素点（按照RGB格式）
         full_pixel = full_img.load()[x,y]
         # 设置一个判定值，像素值之差大于该值则判定像素不相同
         threshold =  60
         # 判断像素的各个颜色之差
+        # print(abs(cut_pixel[1] - full_pixel[1]))
         if abs(cut_pixel[1] - full_pixel[1]) < threshold and  abs(cut_pixel[0] - full_pixel[0]) < threshold and  abs(cut_pixel[2] - full_pixel[2]) < threshold:
             # 如果插值在判断值之内，判定返回的是相同像素
             return True
         else:
             return False 
+
+    def get_track(self, distance):
+        """
+        获取移动轨迹
+        :params distance: 位移距离
+        :return :移动轨迹
+        """
+        # 存储移动轨迹
+        track = []
+        # 当前位移
+        current = 0
+        # 减速阈值
+        mid = distance * 4 / 5
+        # 计算间隔
+        t = 0.2
+        # 初速度
+        v = 0
+        # 当还没有移动到终点的时候
+        while current < distance:
+            # 如果处于加速阶段：
+            if current < mid:
+                # 加速度为3
+                a = 3
+            else:
+                # 减速阶段，加速度为-2
+                a = -2
+            # 初速度为0
+            v0 = v
+            # 当前速度 v = v0 + a*t
+            v = v0 + a*t
+            # 移动距离 x = v0t + 1/2*a*t*t
+            move = v0*t + 1/2*a*t*t
+            current += move
+            track.append(round(move))
+        # print(track)
+        return track
+
+    def get_slider(self):
+        """
+        获取滑块
+        :return 滑块
+        """
+        slider = self.wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'gt_slider_knob')))
+        return slider
+
+    def move_to_gap(self, slider, track):
+        """
+        拖动滑块
+        :params slider: 滑块
+        :parasm track: 移动轨迹
+        """
+        # 悬停在滑块上
+        ActionChains(self.browser).click_and_hold(slider).perform()
+        for x in track:
+            # 拖动滑块
+            ActionChains(self.browser).move_by_offset(xoffset=x, yoffset=0).perform()
+        # 模拟人类对准时间
+        time.sleep(0.5)
+        # 释放滑块
+        ActionChains(self.browser).release().perform()
 
 
     def crack(self):
@@ -186,8 +248,31 @@ class CrackHuxiu():
 
         # 获取缺口位置
         gap = self.get_distance(cut_img, full_img)
+        print('缺口位置', gap)
+        # 减去缺口位移
+        gap -= 8
 
+        # 获取移动轨迹
+        track = self.get_track(gap)
+        print('移动轨迹', track)
 
+        # 获取滑块
+        slider = self.get_slider()
+        # print(slider)
+
+        # 拖动滑块
+        self.move_to_gap(slider, track)
+
+        try:
+            # 判断是否验证通过
+            success = self.wait.until(
+                EC.text_to_be_present_in_element((By.XPATH, '//span[@class="gt_info_type"]'), '验证通过:'))
+            print('验证通过')
+        except:
+            print('验证不通过')
+            success = False
+
+        return success
     def run(self):
         """
         运行
@@ -195,8 +280,10 @@ class CrackHuxiu():
         # 输入账号
         self.open()
 
-        # 验证验证码
-        self.crack()
+        # 验证码验证,不通过尝试刷新直至通过为止
+        while not self.crack():
+            # self.refresh()
+            pass
         
 
 if __name__ == '__main__':
