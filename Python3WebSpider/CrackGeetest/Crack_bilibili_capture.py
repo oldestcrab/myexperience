@@ -12,13 +12,14 @@ import re
 import requests
 import sys
 
-
 class Crack_bilibili():
     def __init__(self):
         self.url = 'https://passport.bilibili.com/login'
         # 测试是否登陆成功
         self.test_url = 'https://account.bilibili.com/account/home'
         self.browser = webdriver.Chrome()
+        # 浏览器全屏
+        self.browser.maximize_window()
         self.wait = WebDriverWait(self.browser, 20)
         self.email = '188195701'
         self.password = '08015417Qiu'
@@ -41,82 +42,49 @@ class Crack_bilibili():
         password.send_keys(self.password)
         time.sleep(2)
     
-    def get_image_info(self, xpath):
+    def get_position(self):
         """
-        获取验证码图片url，位置信息
-        :params xpath:xpath选择器规则
-        :return: 验证码图片url，位置信息
+        获取验证码坐标信息
+        :return : 验证码坐标信息
         """
-        # 定义获取验证码图片url，位置信息的正则
-        link = re.compile(r'background-image: url\("(.*?)"\); background-position: (.*?)px (.*?)px;')
-        # 选中标签
-        elements = self.browser.find_elements_by_xpath(xpath)
-        # print(elements)
-        # 存储位置坐标信息
-        location = list()
-        for element in elements:
-            # 获取标签style属性值
-            style = element.get_attribute("style")
-            # 匹配正则
-            groups = link.search(style)
-            # 获取url
-            image_url = groups[1]
-            # 获取x轴位置
-            x_pos = groups[2]
-            # 获取y轴位置
-            y_pos = groups[3]
-            # 添加到列表
-            location.append((int(x_pos), int(y_pos)))
-            # print(len(location))
-        return image_url, location
+        # print('浏览器大小')
+        # print(self.browser.get_window_size())
+        # 鼠标悬停在滑块按钮
+        hold = self.browser.find_element(By.CLASS_NAME, 'gt_slider_knob')
+        ActionChains(self.browser).move_to_element(hold).perform()
+        time.sleep(2)
+        # 获取验证码图片大小
+        img = self.wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="gt_loading"]')))
+        time.sleep(2)
+        # print(img.location)
+        # print(img.size)
+        # 验证码坐标信息
+        a1, b1, a2, b2 = img.location['x'], img.location['y'], img.size['width']+img.location['x'], img.size['height']+img.location['y']
+        
+        return a1, b1, a2, b2
 
-    def mosaic_image(self, image_url, location):
+    def get_image(self, a1, b1, a2, b2, do):
         """
-        拼接图片
-        :params: image_url:验证码图片url
-        :params: location:验证码图片坐标信息
-        :return: 拼接后的图片
+        获取完整验证码图片
+        :params : 验证码坐标信息
+        :params do: 要执行的动作
+        :return : 完整验证码图片
         """
-        # 获取图片
-        headers = {
-            'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-        }
-        resq = requests.get(image_url, headers=headers)
-        file = BytesIO(resq.content)
-        # 调用Image拼接图片
-        img = Image.open(file)
+        # # 鼠标悬停在滑块按钮或者点击
+        hold = self.browser.find_element(By.CLASS_NAME, 'gt_slider_knob')
+        # 执行动作
+        eval('ActionChains(self.browser).{do}.perform()'.format(do=do))
+        time.sleep(1)
+        # 获取整个屏幕截图
+        screenshot = Image.open(BytesIO(self.browser.get_screenshot_as_png()))
+        # screenshot.show()
+        # print(screenshot.size)
+        # 裁剪获取验证码图片
+        img = screenshot.crop((1015, 345, 1015+375, 345+166))
         # img.show()
-        image_upper_lst = []
-        image_down_lst = []
-        for pos in location:
-            if pos[1] == 0:
-                # y值==0的图片属于上半部分，高度58
-                image_upper_lst.append(img.crop((abs(pos[0]), 0, abs(pos[0]) + 10, 58)))
-            else:
-                # y值==58的图片属于下半部分
-                image_down_lst.append(img.crop((abs(pos[0]), 58, abs(pos[0]) + 10, img.height)))
 
-        # 初始化偏移量为0
-        x_offset = 0
-        # 新建一个图片，new()第一个参数是颜色模式，第二个是图片尺寸
-        new_img = Image.new("RGB", (260, img.height))
+        return img
 
-        # 拼接第一行
-        for img in image_upper_lst:
-            # past()方法进行粘贴，第一个参数是被粘对象，第二个是粘贴位置
-            new_img.paste(img, (x_offset, 58))
-            # 偏移量对应增加移动到下一个图片位置,img.width表示图片宽度
-            x_offset += img.width
-
-        # 拼接第二行
-        x_offset = 0
-        for img in image_down_lst:
-            new_img.paste(img, (x_offset, 0))
-            x_offset += img.width
-
-        # new_img.show()
-        return new_img
-    
     def get_distance(self, cut_image, full_image):
         """
         获取缺口偏移量
@@ -125,7 +93,7 @@ class Crack_bilibili():
         :return:缺口偏移量
         """
         # 滑块的初始位置
-        left = 60
+        left = 100
         # 遍历像素点横坐标
         for i in range(left, full_image.size[0]):
             # 遍历像素点纵坐标
@@ -223,12 +191,6 @@ class Crack_bilibili():
         for x in track:
             # 使用move_by_offset()方法拖动滑块，perform()方法用于执行
             ActionChains(self.browser).move_by_offset(xoffset=x, yoffset=0).perform()
-        # fake_track = [2,3,3,2,2,3,3,2,2,3,3,2,2,3,3,2]
-        # for x in fake_track:
-        #     ActionChains(self.browser).move_by_offset(xoffset=x, yoffset=0).perform()
-        # for x in fake_track:
-        #     ActionChains(self.browser).move_by_offset(xoffset=-x, yoffset=0).perform()
-
         # 模拟人类对准时间
         time.sleep(0.5)
         # 释放滑块
@@ -239,29 +201,30 @@ class Crack_bilibili():
         验证码验证
         :return :验证结果
         """
-        # 获取带缺口的验证码图片
-        cut_image_url, cut_image_location = self.get_image_info('//div[@class="gt_cut_bg_slice"]')
+        # 获取验证码图片坐标信息
+        a1, b1, a2, b2 = self.get_position()
+        # print('验证码图片坐标信息', a1, b1, a2, b2)
         # 获取完整的验证码图片
-        full_image_url, full_image_location = self.get_image_info('//div[@class="gt_cut_fullbg_slice"]')
-        # print(cut_image_url, full_image_url)
+        full_image = self.get_image(a1, b1, a2, b2, 'move_to_element(hold)')
+        # 获取带缺口的验证码图片
 
-        # 根据坐标拼接图片
-        cut_image = self.mosaic_image(cut_image_url, cut_image_location)
-        full_image = self.mosaic_image(full_image_url, full_image_location)
+        cut_image = self.get_image(a1, b1, a2, b2, 'click_and_hold(hold)')
 
         # 保存图片方便查看
-        cut_image.save(sys.path[0] + '/cut_img.jpg')
-        full_image.save(sys.path[0] + '/full_img.jpg')
-
+        cut_image.save(sys.path[0] + '/cut_img.png')
+        # cut_image.show()
+        full_image.save(sys.path[0] + '/full_img.png')
+        # full_image.show()
+        # print(full_image.size)
         # 获取缺口位置
         gap = self.get_distance(cut_image, full_image)
         print('缺口位置', gap)
         # 减去缺口位移
-        gap -= 5
+        gap -= 60
 
         # 获取移动轨迹
         track = self.get_track(gap)
-        # print('滑动轨迹', track)
+        print('滑动轨迹', track)
 
         # 获取滑块标签
         slider = self.get_slider()
