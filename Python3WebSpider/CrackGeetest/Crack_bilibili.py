@@ -250,8 +250,8 @@ class Crack_bilibili():
         full_image = self.mosaic_image(full_image_url, full_image_location)
 
         # 保存图片方便查看
-        cut_image.save(sys.path[0] + '/cut.jpg')
-        full_image.save(sys.path[0] + '/full.jpg')
+        cut_image.save(sys.path[0] + '/cut_img.jpg')
+        full_image.save(sys.path[0] + '/full_img.jpg')
 
         # 获取缺口位置
         gap = self.get_distance(cut_image, full_image)
