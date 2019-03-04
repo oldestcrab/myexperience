@@ -21,7 +21,7 @@ class Crack_bilibili():
         self.browser = webdriver.Chrome()
         self.wait = WebDriverWait(self.browser, 20)
         self.email = '188195701'
-        self.password = '08015417Qiu'
+        self.password = '068978'
 
     def __del__(self):
         self.browser.close()
