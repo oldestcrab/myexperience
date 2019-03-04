@@ -18,8 +18,8 @@ class TestCookies():
         self.test_url = 'http://www.igenebio.com/oa/?r=main/default/index'
         self.browser = webdriver.Chrome()
         self.wait = WebDriverWait(self.browser, 20)
-        self.email = '邱海伦'
-        self.password = '08015417Qiu'
+        self.email = ''
+        self.password = ''
 
     def __del__(self):
         self.browser.close()
