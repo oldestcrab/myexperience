@@ -1,30 +1,10 @@
-from pyquery import PyQuery as pq
-import sys
+#  -*- coing:utf-8 -*-
 
-html = '''
-<div id="container">
-    <ul class="list">
-         <li class="item-0">first item</li>
-         <li class="item-1"><a href="link2.html">second item</a></li>
-         <li class="item-0 active"><a href="link3.html"><span class="bold">third item</span></a></li>
-         <li class="item-1 active"><a href="link4.html">fourth item</a></li>
-         <li class="item-0"><a href="link5.html">fifth item</a></li>
-     </ul>
- </div>
-'''
+from xml.etree import ElementTree
 
-doc = pq(html)
-a = doc('li').items()
-# b = a.siblings('.item-1.active')
-b = a
-print(b)
-print(type(b))
+dom = ElementTree.parse(r'C:/Users/CRAB/Desktop/uniprot_sprot.xml/uniprot_sprot.xml')
+a = dom.findall('gene')
 for i in a:
-    print(i)
-
-
-
-
-
-
-
+    print(i.xml)
+    print(i.text)
+# print(dom)
