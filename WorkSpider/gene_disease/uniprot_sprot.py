@@ -6,77 +6,76 @@ import time
 
 def fast_iter(context, func, *args, **kwargs):
     """
+    http://lxml.de/parsing.html#modifying-the-tree
+    Based on Liza Daly's fast_iter
+    http://www.ibm.com/developerworks/xml/library/x-hiperfparse/
+    See also http://effbot.org/zone/element-iterparse.htm
     读取xml数据，并释放空间
-    :params context: etree.iterparse生成的迭代器
+    :params context: etree.iterparse生成的可迭代对象
     :params func:处理xml数据的func
     """
-    # 事件、元素
+    # 时间、元素
     for event, elem in context:
         # 处理xml数据
         func(elem, *args, **kwargs)
-        # 重置元素，清空元素内部数据
+        # It's safe to call clear() here because no descendants will be
+        # accessed
         elem.clear()
-        # 选取当前节点的所有先辈（父、祖父等）以及当前节点本身
+        # Also eliminate now-empty references from the root node to elem
         for ancestor in elem.xpath('ancestor-or-self::*'):
-            # 如果当前节点还有前一个兄弟，则删除父节点的第一个子节点。getprevious():返回当前节点的前一个兄弟或None。
             while ancestor.getprevious() is not None:
-                # 删除父节点的第一个子节点，getparent()：返回当前节点的父元素或根元素或None。
                 del ancestor.getparent()[0]
-    # 释放内存
     del context
 
 
 def process_element(elem):
-    """
-    处理element
-    :params elem: Element
-    """
-    # 储存基因列表
-    gene_list = []
-    for i in elem.xpath('.//*[local-name()="gene"]/*[local-name()="name"]'):
-        # 获取基因名字
-        gene = i.text
-        # 添加到列表
-        gene_list.append(gene)
-    # 存入mysql
-    # print('gene', gene_list)
-    save_mysql(gene_list, 'gene')
-    
-    # 储存所有疾病列表
-    disease_list = []
-    # print(elem.xpath('./@created'))
-    for i in elem.xpath('.//*[local-name()="disease"]'):
-        # 储存每个疾病列表的详细信息
-        disease_list_inner = []
-        # 获取疾病名字
-        disease_name = i.xpath('./*[local-name()="name"]')[0].text
-        # 添加到列表
-        disease_list_inner.append(disease_name)
-        # 获取疾病缩写
-        disease_acronym = i.xpath('./*[local-name()="acronym"]')[0].text
-        # 添加到列表
-        disease_list_inner.append(disease_acronym)
-        # print(disease_list_inner)
-        # 嵌套列表
-        disease_list.append(disease_list_inner)
-    # 存入mysql
-    # print('disease', disease_list)
-    save_mysql(disease_list, 'disease')
-    
-    # 判断是否都有
-    if gene_list and disease_list:
-        # 储存基因和疾病关联信息
-        gd_list = []
-        for gene_name in gene_list:
-            for disease in disease_list:
-                disease_name = disease[0]
-                # 组合基因和疾病
-                gd_list_inner = [gene_name, disease_name]
-                # 添加到列表
-                gd_list.append(gd_list_inner)
-        print(gd_list)
+        # 储存基因列表
+        gene_list = []
+        for i in elem.xpath('.//*[local-name()="gene"]/*[local-name()="name"]'):
+            # 获取基因名字
+            gene = i.text
+            # 添加到列表
+            gene_list.append(gene)
         # 存入mysql
-        save_mysql(gd_list, 'gd')
+        # print('gene', gene_list)
+        save_mysql(gene_list, 'gene')
+
+        # 储存所有疾病列表
+        disease_list = []
+        # print(elem.xpath('./@created'))
+        for i in elem.xpath('.//*[local-name()="disease"]'):
+            # 储存每个疾病列表的详细信息
+            disease_list_inner = []
+            # 获取疾病名字
+            disease_name = i.xpath('./*[local-name()="name"]')[0].text
+            # 添加到列表
+            disease_list_inner.append(disease_name)
+            # 获取疾病缩写
+            disease_acronym = i.xpath('./*[local-name()="acronym"]')[0].text
+            # 添加到列表
+            disease_list_inner.append(disease_acronym)
+            # print(disease_list_inner)
+            # 嵌套列表
+            disease_list.append(disease_list_inner)
+        # 存入mysql
+        # print('disease', disease_list)
+        save_mysql(disease_list, 'disease')
+        
+        # 判断是否都有
+        if gene_list and disease_list:
+            # 储存基因和疾病关联信息
+            gd_list = []
+            for gene_name in gene_list:
+                for disease in disease_list:
+                    disease_name = disease[0]
+                    # 组合基因和疾病
+                    gd_list_inner = [gene_name, disease_name]
+                    # 添加到列表
+                    gd_list.append(gd_list_inner)
+
+            # print(gd_list)
+            # 存入mysql
+            save_mysql(gd_list, 'gd')
 
 def save_mysql(source, flag):
         """
@@ -112,7 +111,7 @@ def save_mysql(source, flag):
                             db.commit()
                         # print('save mysql gene success')
                     except:
-                        print("save mysql gene failed")
+                        print("save mysql gene failed", name)
                         # 错误则回滚
                         db.rollback()
 
@@ -140,7 +139,7 @@ def save_mysql(source, flag):
                             db.commit()
                         # print('save mysql disease success')
                     except:
-                        print("save mysql disease failed")
+                        print("save mysql disease failed", i[0])
                         # 错误则回滚
                         db.rollback()
 
@@ -154,7 +153,7 @@ def save_mysql(source, flag):
                         disease_id = cursor.fetchone()[0]
                         # print(disease_id)
                     except:
-                        print('get disease id error', i[1])
+                        print('get disease id error', i[0])
 
                     # 通过gene_name查询gene_id
                     try:
@@ -164,7 +163,7 @@ def save_mysql(source, flag):
                         gene_id = cursor.fetchone()[0]
                         # print(gene_id)
                     except:
-                        print('get disease id error', i[1])
+                        print('get gene id error', i[1])
 
                     data = {
                         'disease_id':disease_id,
@@ -196,16 +195,15 @@ def save_mysql(source, flag):
             # 关闭连接
             db.close()
 
+
 if __name__ == '__main__':
     print('start', time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
     start = time.time()
-
     # 文件路径
-    infile = r'C:/Users/CRAB/Desktop/a.xml'
+    infile = r'C:/Users/CRAB/Desktop/uniprot_sprot.xml/uniprot_sprot.xml'
     # 通过迭代读取xml，带命名空间的要加上命名空间
     context = etree.iterparse(infile,events=('end',),encoding='UTF-8',tag='{http://uniprot.org/uniprot}entry')
     # 快速读取xml数据
     fast_iter(context,process_element)
-
     print('stop', time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
     print('time', time.time()-start)

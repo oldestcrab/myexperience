@@ -1,10 +1,11 @@
-#  -*- coing:utf-8 -*-
+from lxml import etree
 
-from xml.etree import ElementTree
-
-dom = ElementTree.parse(r'C:/Users/CRAB/Desktop/uniprot_sprot.xml/uniprot_sprot.xml')
-a = dom.findall('gene')
-for i in a:
-    print(i.xml)
-    print(i.text)
-# print(dom)
+context = etree.parse(r'C:/Users/CRAB/Desktop/a.xml')
+print(context)
+elem = context.xpath('//revision')[0]
+# print(elem.getparent()[1].text)
+# for i in elem.getparent():
+#     print(i)
+while elem.getprevious() is not None:
+    print(elem.getparent()[0])
+    del elem.getparent()[0]
