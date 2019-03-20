@@ -244,7 +244,7 @@ if __name__ == '__main__':
     print('start', time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
     start = time.time()
     # 文件路径
-    infile = r'C:/Users/CRAB/Desktop/uniprot_sprot.xml/uniprot_sprot.xml'
+    infile = r'./uniprot_sprot.xml'
     # 通过迭代读取xml，带命名空间的要加上命名空间
     context = etree.iterparse(infile,events=('end',),encoding='UTF-8',tag='{http://uniprot.org/uniprot}entry')
     # 快速读取xml数据
