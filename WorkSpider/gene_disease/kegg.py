@@ -5,6 +5,7 @@ import jsonpath
 import time
 import pymysql
 import re
+from save_mysql_gene_disease import save_mysql
 
 def handle_json(name, children):
     """
@@ -31,65 +32,37 @@ def handle_json(name, children):
                     # 储存疾病名与children疾病名
                     if name == 'br08402_gene':
                         name = 'Human diseases'
-                    name_list = [name, children_name]
+                    # name为父辈疾病 
+                    parent_name_list = [name, children_name]
                     # print(name_list)
                     # 保存至mysql
-                    # save_mysql(name_list, 'disease_parent')
+                    save_mysql(parent_name_list, 'disease', 'kegg')
+
+                else:
+                    # name为父辈疾病,new_name为子疾病
+                    new_name = re.sub(r'\[.*\]','',re.search(r'H\d+\s+(.*)', children_name).group(1))
+                    disease_name_list = [name, new_name.strip()]
+                    # print(disease_name_list)
+                    # 保存至mysql
+                    save_mysql(disease_name_list, 'disease_parent', 'kegg')
             else:
                 # name为疾病信息，children_name为基因信息
-                print(name)
-                pattern = re.compile(r'H\d+(.*)\s([.*])?')
-                b = pattern.search(a).group()
+                # print(name)
+                # print(children_name)
+                if re.search(r'.*\[.*\]', children_name) and re.search(r'^H\d+', name):
+                    # 基因名
+                    gene_name = re.sub(r'\(.*\)','',re.search(r'(.*?)\[.*\]', children_name).group(1))
+                    # 保存至mysql
+                    save_mysql(gene_name, 'gene_primary', 'kegg')
+                    # 疾病名
+                    disease_name = re.sub(r'\[.*\]','',re.search(r'H\d+\s+(.*)', name).group(1))
+                    # 储存疾病、基因信息
+                    gd_list = [disease_name, gene_name]
+                    # 保存至mysql
+                    save_mysql(gd_list, 'gd', 'kegg')
+
             # 遍历迭代
             handle_json(children_name, children_children)
-
-def save_mysql(source, flag):
-        """
-        保存到mysql
-        :param source: list数据
-        :param flag: 标识
-        """
-        # 连接数据库
-        db = pymysql.connect(host='localhost', user='bmnars', password='vi93nwYV', port=3306, db='gene_disease')
-        # 获得句柄
-        cursor = db.cursor()
-        # 时间
-        update_time = time.strftime('%Y-%m-%d',time.localtime())
-        try:
-            # 如果标识为disease_parent，则为疾病父类信息存入表disease_parent_kegg中，
-            if flag == 'disease_parent':
-                name = source[1]
-                parent_name = source[0]
-                data = {
-                    'name':name,
-                    'parent_name':parent_name,
-                    'update_time':update_time
-                }
-                table = 'disease_parent_kegg'
-                keys = ','.join(data.keys())
-                values = ','.join(['%s']*len(data))
-                sql = 'INSERT INTO {table}({keys}) VALUES ({values}) on duplicate key update '.format(table=table, keys=keys, values=values)
-                update = ', '.join(['{key} = %s'.format(key=key) for key in data]) + ';'
-                sql += update
-                # print(sql)
-                try:
-                    # 执行语句
-                    if cursor.execute(sql,tuple(data.values())*2):
-                        # 提交
-                        db.commit()
-                    # print('save mysql gene success')
-                except Exception as e:
-                    print("save mysql primary gene failed", name, e.args)
-                    # 错误则回滚
-                    db.rollback()
-        except Exception as e:
-            print('save_mysql error', e.args)
-        finally:
-            # 关闭句柄
-            cursor.close()      
-            # 关闭连接
-            db.close()
-
 
 if __name__ == '__main__':
     # 记录开始时间
