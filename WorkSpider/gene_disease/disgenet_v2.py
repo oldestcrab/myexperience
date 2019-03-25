@@ -9,7 +9,7 @@ def parse_dsv(infile):
     解析dsv数据
     :params infile: dsv文件路径
     """
-    with open(r'C:/Users/CRAB/Desktop/all_gene_disease_pmid_associations.tsv', encoding='utf-8', newline='') as f:
+    with open(r'./all_gene_disease_pmid_associations.tsv', encoding='utf-8', newline='') as f:
         reader = csv.reader(f, delimiter='\t')
         for row in reader:
             # geneSymbol row[1]

@@ -51,6 +51,11 @@ def save_mysql(source, flag, table_name):
                     'parent_name':source[0],
                     'update_time':update_time
                 }
+            elif len(source) ==1:
+                data = {
+                    'name':source[0],
+                    'update_time':update_time
+                }
             else:
                 data = {
                     'name':source[1],
