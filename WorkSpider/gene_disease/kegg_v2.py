@@ -70,7 +70,7 @@ if __name__ == '__main__':
     start = time.time()
 
     # json文件路径
-    infile = r'C:/Users/CRAB/Desktop/br08402_gene.json'
+    infile = r'./br08402_gene.json'
     # 读取json文件
     with open(infile, 'r') as f:
         context = json.load(f)

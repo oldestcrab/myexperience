@@ -43,6 +43,7 @@ def save_mysql(source, flag, table_name):
 
         # 如果标识为disease，且存在内容，则为基因信息存入表disease中，
         if flag == 'disease' and source:
+            # print(source)
             if len(source) ==3:
                 data = {
                     'name':source[1],
@@ -68,6 +69,7 @@ def save_mysql(source, flag, table_name):
                 if cursor.execute(sql,tuple(data.values())*2):
                     # 提交
                     db.commit()
+                    # print(1)
             except Exception as e:
                 print("save mysql disease failed", e.args)
                 # 错误则回滚
@@ -100,7 +102,9 @@ def save_mysql(source, flag, table_name):
         if flag == 'gd' and source:
             # 通过disease_name查询disease_id
             try:
+                # print(source[0])
                 sql_disease_id = 'select id from disease_{table_name} where name = "{disease_name}";'.format(disease_name=source[0], table_name=table_name)
+                # print(sql_disease_id)
                 cursor.execute(sql_disease_id)
                 disease_id = cursor.fetchone()[0]
                 # print(disease_id)
