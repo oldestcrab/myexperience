@@ -4,15 +4,15 @@ import pymysql
 from settings import *
 
 class MySQL():
-    def __init__(self, host=MYSQL_HOST, username=MYSQL_USER, password=MYSQL_PASSWORD, port=MYSQL_PORT,database=MYSQL_DATABASE):
+    def __init__(self):
         """
         mysql初始化
         """
         try:
-            self.db = pymysql.connect(host, username, password, database, charset='utf-8', port=port)
+            self.db = pymysql.connect(host=MYSQL_HOST, user=MYSQL_USER, password=MYSQL_PASSWORD, port=MYSQL_PORT,database=MYSQL_DATABASE)
             self.cursor = self.db.cursor()
         except Exception as e:
-            print(e.args)
+            print('connect mysql error',e.args)
     
     def __del__(self):
         self.cursor.close()

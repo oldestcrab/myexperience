@@ -79,8 +79,8 @@ class Spider():
         """
         doc = pq(response.text)
         data = {
-            'title':doc('#activity-name').text();
-            'content':doc('.rich_media_content').text();
+            'title':doc('#activity-name').text(),
+            'content':doc('.rich_media_content').text(),
             'date':doc('#js_modify_tim').text(),
             'nickname':doc('#js_name').text(),
             'wechat':doc('#js_profile_qrcode > div > p:nth-child(3) > span').text()
@@ -127,10 +127,11 @@ class Spider():
             weixin_request = self.queue.pop()
             callback = weixin_request.callback
             print('Schedule', weixin_request.url)
-            response = self.reqeust(weixin_request)
+            response = self.reuqest(weixin_request)
+            print(response.text)
             if response and response.status_code in VALID_STATUSES:
-                result = list(callback(response))
-                if result:
+                results = list(callback(response))
+                if results:
                     for result in results:
                         print('New Result', type(result))
                         if isinstance(result, WeixinRequest):
@@ -147,6 +148,7 @@ class Spider():
         运行入口
         """
         self.start()
+        self.schedule()
 
 
 

@@ -10,7 +10,7 @@ REDIS_KEY = 'sougouweixin'
 # 获取代理url
 PROXY_POOL_URL = 'http://127.0.0.1:5555/random'
 
-# 响应失败时间
+# 响应失败次数
 MAX_FAILED_TIME = 20
 
 # 超时设置
