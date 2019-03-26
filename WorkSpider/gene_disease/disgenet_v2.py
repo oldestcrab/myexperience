@@ -9,7 +9,7 @@ def parse_dsv(infile):
     解析dsv数据
     :params infile: dsv文件路径
     """
-    with open(r'./all_gene_disease_pmid_associations.tsv', encoding='utf-8', newline='') as f:
+    with open(infile, encoding='utf-8', newline='') as f:
         reader = csv.reader(f, delimiter='\t')
         for row in reader:
             # geneSymbol row[1]
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     print('start', time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
     start = time.time()
     # 文件路径
-    infile = r'C:/Users/CRAB/Desktop/all_gene_disease_pmid_associations.tsv'
+    infile = r'./all_gene_disease_pmid_associations.tsv'
 
     # 解析数据
     parse_dsv(infile)
