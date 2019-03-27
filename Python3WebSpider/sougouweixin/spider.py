@@ -7,19 +7,21 @@ import requests
 from db import RedisQueue
 from pyquery import PyQuery as pq
 from mysql import MySQL
+import time
 
 class Spider():
     queue = RedisQueue()
     keyword = 'NBA'
-    url = 'https://weixin.sogou.com/weixin?type=2&s_from=input&query=' + keyword
+    url = 'https://weixin.sogou.com/weixin?type=2&query=' + keyword
     headers ={
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-    'Accept-Encoding': 'gzip, deflate',
-    'Accept-Language': 'zh-CN,zh;q=0.8,en;q=0.6,ja;q=0.4,zh-TW;q=0.2,mt;q=0.2',
-    'Cache-Control': 'max-age=0',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Accept-Language': 'zh-CN,zh;q=0.9',
+    'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Cookie': 'IPLOC=CN4401; SUID=28CB5E7D3020910A000000005C6225BE; SUV=1549936064592885; pgv_pvi=8287179776; ABTEST=0|1552986153|v1; weixinIndexVisited=1; sct=45; SNUID=D4E773512C28A8D914386FB32D1B245E',
+    'Cookie': 'SUID=28CB5E7D3020910A000000005C6225BE; SUV=1549936064592885; pgv_pvi=8287179776; ABTEST=0|1552986153|v1; weixinIndexVisited=1; JSESSIONID=aaa7g4gaMDO77hr8j15Mw; PHPSESSID=fs9uhr5cbbo8uiid7cioi8g8c1; IPLOC=SG; SNUID=EA5C2AFF5F5BDB57E1A7B4A85FF0A8E3; sct=48',
     'Host': 'weixin.sogou.com',
+    'Pragma': 'no-cache',
     'Upgrade-Insecure-Requests': '1',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'
     
@@ -40,7 +42,7 @@ class Spider():
                 return response.text
             return None
         except Exception as e:
-            print('get proxy error', e.args)
+            # print('get proxy error', e.args)
             return None
     
     def start(self):
@@ -49,7 +51,8 @@ class Spider():
         """
         # 全局更新Headers
         self.session.headers.update(self.headers)
-        weixin_request = WeixinRequest(url=self.url, callback=self.parse_index, need_proxy=True)
+        # print(self.session.headers)
+        weixin_request = WeixinRequest(url=self.url, headers=self.session.headers, callback=self.parse_index, need_proxy=True)
         # 调度第一个请求
         self.queue.add(weixin_request)
 
@@ -62,13 +65,14 @@ class Spider():
         doc = pq(response.text)
         items = doc('.news-box .news-list li .txt-box h3 a').items()
         for item in items:
-            url = item.attr('href')
-            weixin_request = WeixinRequest(url=url, callback=self.parse_detail)
+            url = 'https://weixin.sogou.com' + item.attr('href')
+            weixin_request = WeixinRequest(url=url, headers=self.headers, callback=self.parse_detail)
             yield weixin_request
         next = doc('#sogou_next').attr('href')
         if next:
             url = 'https://weixin.sogou.com/weixin' + str(next)
-            weixin_request = WeixinRequest(url=url, callback=self.parse_index, need_proxy=True)
+            # print(url)
+            weixin_request = WeixinRequest(url=url, headers=self.headers, callback=self.parse_index, need_proxy=True)
             yield weixin_request
             
     def parse_detail(self, response):
@@ -95,14 +99,15 @@ class Spider():
         """
         try:
             if weixin_request.need_proxy:
-                proxy = self.get_proxy()
+                # proxy = self.get_proxy()
+                proxy = ''
                 if proxy:
                     proxies = {
                         'http':'http://' + proxy,
                         'https':'https://' + proxy
                     }
-                    return self.session.send(weixin_request.prepare(), timeout=weixin_request.timeout, allow_redirects=False, proxies=proxies)
-            return self.session.send(weixin_request.prepare(), timeout=weixin_request.timeout, allow_redirects=False)
+                    return self.session.send(self.session.prepare_request(weixin_request), timeout=weixin_request.timeout, allow_redirects=False, proxies=proxies)
+            return self.session.send(self.session.prepare_request(weixin_request), timeout=weixin_request.timeout, allow_redirects=False)
         except Exception as e:
             print(e.args)     
             return False
@@ -126,13 +131,16 @@ class Spider():
         while not self.queue.empty():
             weixin_request = self.queue.pop()
             callback = weixin_request.callback
-            print('Schedule', weixin_request.url)
+            print(callback)
+            # print('Schedule', weixin_request.url)
             response = self.reuqest(weixin_request)
-            print(response.text)
+            print(response.request.headers)
             if response and response.status_code in VALID_STATUSES:
                 results = list(callback(response))
+                print(results)
                 if results:
                     for result in results:
+                        # time.sleep(3)
                         print('New Result', type(result))
                         if isinstance(result, WeixinRequest):
                             self.queue.add(result)
