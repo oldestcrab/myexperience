@@ -1,10 +1,10 @@
-import re
+import csv
 
-# a = 'H00048  Hepatocellular carcinoma [PATH:hsa05225 hsa05203 hsa05161 hsa05160 hsa05206]'
-# a = 'H00048  Hepatocellular carcinoma'
-a = 'CTLA-4 (polymorphism) [HSA:1493] [KO:K06538]'
-print(re.search(r'(.*?)\[.*\]', a).group(1))
-c = re.sub(r'\(.*\)','',re.search(r'(.*?)\[.*\]', a).group(1))
-print(c)
+a = '11-BETA-HSD3,100174880,"Anemia, Hemolytic",MESH:D000743,,"Water Pollutants, Chemical",4.49,,22425172'
+b = [a]
+reader = csv.reader(b, delimiter=',')
+for row in reader:
+    print(len(row))
+    print(row)
 
-['11-BETA-HSD3,100174880,"Abnormalities, Drug-Induced",MESH:D000014,,Endocrine Disruptors,5.16,,22659286']
+

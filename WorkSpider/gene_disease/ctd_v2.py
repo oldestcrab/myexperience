@@ -144,7 +144,7 @@ if __name__ == '__main__':
     start = time.time()
 
     # 文件路径
-    infile = r'C:/Users/CRAB/Desktop/CTD_genes_diseases.csv/CTD_genes_diseases.csv'
+    infile = r'./CTD_genes_diseases.csv'
     # 解析数据
     parse_csv(infile)
      
