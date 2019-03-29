@@ -1,10 +1,9 @@
-import csv
+# -*- coding:utf-8 -*-
 
-a = '11-BETA-HSD3,100174880,"Anemia, Hemolytic",MESH:D000743,,"Water Pollutants, Chemical",4.49,,22425172'
-b = [a]
-reader = csv.reader(b, delimiter=',')
-for row in reader:
-    print(len(row))
-    print(row)
-
-
+a = [1,'',2,'',3]
+print(len(a))
+for i in range(len(a)):
+    if not a[i] :
+        print('get')
+        a[i] = 1
+print(a)
