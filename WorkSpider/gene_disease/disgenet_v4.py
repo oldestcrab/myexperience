@@ -129,7 +129,7 @@ if __name__ == '__main__':
     print('start', time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
     start = time.time()
     # 文件路径
-    infile = r'C:/Users/CRAB/Desktop/curated_gene_disease_associations (1).tsv/curated_gene_disease_associations.tsv'
+    infile = r'./curated_gene_disease_associations.tsv'
 
     # 解析数据
     parse_dsv(infile)
