@@ -1,9 +1,6 @@
 # -*- coding:utf-8 -*-
+import csv
 
-a = [1,'',2,'',3]
-print(len(a))
-for i in range(len(a)):
-    if not a[i] :
-        print('get')
-        a[i] = 1
-print(a)
+with open(r'C:/Users/CRAB/Desktop/ene.csv', 'w', encoding='utf-8', newline='') as f:
+    writer = csv.writer(f)
+    writer.writerow(['mim_id', 'entrez_gene_id', 'name', 'ensembl_gene_id'])
